@@ -174,7 +174,13 @@ Operating Systems
   \footnotesize
   \begin{columns}[T]
     \begin{column}{0.45\textwidth}
-        Foo bar baz
+        Prevent accessing out of bounds given to object
+        \\
+        Some approaches:
+        \begin{itemize}
+            \item Dynamic \small{(fat pointers, bounds tables, objects)}
+            \item Semi-static \small{(via annotations and dependent types})
+        \end{itemize}
     \end{column}
     \begin{column}{0.45\textwidth}
 %      \lstinputlisting[language=C,mathescape]{lst/spatial_plain.c}
@@ -192,41 +198,141 @@ $$
 
 \begin{frame}[fragile]{Fat Pointers}
   \footnotesize
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-        Foo bar baz
-    \end{column}
-    \begin{column}{0.45\textwidth}
-%      \lstinputlisting[language=C,mathescape]{lst/spatial_fat.c}
+A fat pointer structure is contains metadata such as base address and size along with normal value
+\\
++ No cost to find metadata
+\\
+- Incompatible with legacy code
+\todo{show example figure in memory}
+\end{frame}
+
+\begin{frame}{Fat Pointers}
+SafeC \footcite{austin_efficient_1994}:
+  \begin{itemize}
+     \item Compile-time transform, replace all pointers and extend all pointer definitions
+     \item Fields include:
+          \begin{itemize}
+             \item base, size, storage class (errant deallocations)
+             \item Unique capability issued to an allocation
+          \end{itemize}
+     \item Insert array access checks before each pointer/array dereference
+     \item Complete spatial safety as long as
+         \begin{itemize}
+            \item transparent storage management
+            \item no safe pointer object attribute manipulation
+         \end{itemize}
+     \item 275\% space overhead, 2-6x runtime overhead, 0.35-3x code size overhead
+         \begin{itemize}
+            \item safe pointers aren't register allocated
+            \item compiler optimizations fail with additonal checks
+         \end{itemize}
+  \end{itemize}
+\end{frame}
+\begin{frame}{Fat Pointers}
+Cyclone \footcite{jim_cyclone_2002}:
+  \begin{itemize}
+      \item Created with intended target of TAL
+      \item Distinguish array pointers from non-array poitners
+          \begin{itemize}
+             \item never-null pointer
+             \item fat pointer
+             \item static analysis to warn of uninitialized poitners
+           \end{itemize}
+      \item Statically validate and remove non-array fat pointers
+      \item 40\% runtime overhead
+      \item Uses regions + automatic memory management for temporal safety
+  \end{itemize}
+CCured \footcite{necula_ccured:_2002}:
+  \begin{itemize}
+      \item Whole-program type inference to statically optimize different pointer uses via a strong type system
+        \begin{itemize}
+            \item SAFE: almost no overhead, no ptr arith, array indexing, type casts
+            \item SEQ: fat pointers allow arith, indexing, some casts
+            \item WILD: arbitrary casts, expensive dynamic checks
+        \end{itemize}
+    \item insert run-time checks to handle portions where static verification insufficient
+    \item 3\%-87\% runtime overhead increase
+  \end{itemize}
+Cuckoo \footcite{west_cuckoo:_2005}
+  \begin{itemize}
+      \item Store array size in memory before array dimensions's first elem
+      \item Check at runtime (compile-time if possible)
+      \item Type system for preventing assignment of automatic objects into longer-lifetime pointers
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Fat Pointers}
        \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 int main() {
     printf("hello, world!\n");
 }
 $$
         \end{lstlisting}
-    \end{column}
-  \end{columns}
+\end{frame}
+
+%% - fullcite:akritidis_baggy_2009
+%% - fullcite:brunink_boundless_2011
+
+\begin{frame}[fragile]{Separate Metadata}
+Overview: avoid fat pointers by spltting bounds and base metadata
+\\
+\todo{show example figure in memory}
+\\
+MSCC \footcite{xu_efficient_2004}
+    \begin{itemize}
+        \item Shadow structures mirror entire original structure
+        \item Checked pointers modified by external libraries must have metadata updated at the library call via wappers
+        \item 1.63x overhead
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Separate Metadata}
+CCured (2005) \footcite{necula_ccured:_2005}
+    \begin{itemize}
+        \item Improve original CCured work
+        \item Reduce number of WILD pointers
+            \begin{itemize}
+                \item use physical subtyping for handling upcasts
+                \item special pointer carrying runtime-type info for downcasts
+            \end{itemize}
+        \item fix compat issues
+            \begin{itemize}
+                \item specify conversions, checking at boundaries with precompiled libraries
+                \item separate metadata in mirror data structure (perf hit b/c of loss of locality
+            \end{itemize}
+    \end{itemize}
+Softbound \footcite{nagarakatte_softbound:_2009}
+    \begin{itemize}
+        \item {insert runtime bounds checks, consulting disjoint metadata via table lookup}
+        \item {fix disjoint shadow data structure by ...}
+        \item handles arbitrary casts, sub-object overflows not covered by MSCC
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Separate Metadata}
+Checked C \footcite{ruef_checked_2017}
+    \begin{itemize}
+        \item extend C with two \emph{checked pointer types}
+        \item \todo{add back in two items}
+%        \item "_Ptr<T>~", a pointer for dereference only (no arith)
+%        \item "~_Array_ptr<T>~" and "~_Nt_array_ptr<T>_~", supporting arith w/ bounds declarations in type (latter is ~NUL~ terminated)
+        \item isolate (un)safe code with /checked code regions/ at file/func/block level; prevent unchecked pointer usage and certain casts
+        \item cannot blame checked code for violation
+        \item compiler confirms restrictions maintained, inserts checks (poss optim away) on ptr access
+        \item tool to automatically rewrite code to use checked ptrs when possible
+    \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Separate Metadata}
-  \footnotesize
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-        Foo bar baz
-    \end{column}
-    \begin{column}{0.45\textwidth}
-%      \lstinputlisting[language=C,mathescape]{lst/spatial_table.c}
        \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 int main() {
     printf("hello, world!\n");
 }
 $$
         \end{lstlisting}
-    \end{column}
-  \end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Objects}
+\begin{frame}[fragile]{Separate Metadata}
   \footnotesize
   \begin{columns}[T]
     \begin{column}{0.45\textwidth}
@@ -246,72 +352,125 @@ $$
 
 \subsection{Some Static Approaches}
 
+\subsubsection{Annotations}
+
 \begin{frame}[fragile]{Extended Type Checking}
-  \footnotesize
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-        Foo bar baz
-    \end{column}
-    \begin{column}{0.45\textwidth}
-%      \lstinputlisting[language=C,mathescape]{lst/spatial_etc.c}
-       \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
-int main() {
-    printf("hello, world!\n");
-}
-$$
-        \end{lstlisting}
-    \end{column}
-  \end{columns}
+Extended Type Checking (ETC) \footcite{detlefs_overview_1995}
+    \begin{itemize}
+      \item use automatic theorem prover to detect index bounds in Modula-3
+      \item use info in annotations to assist
+      \item easier than C b/c no ptr arithmetic
+    \end{itemize}
+Also ETC/Java \footcite{flanagan_extended_2002}
 \end{frame}
 
 \begin{frame}[fragile]{LCLint}
-  \footnotesize
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-        Foo bar baz
-    \end{column}
-    \begin{column}{0.45\textwidth}
-%      \lstinputlisting[language=C,mathescape]{lst/spatial_lclint.c}
-       \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
-int main() {
-    printf("hello, world!\n");
-}
-$$
-        \end{lstlisting}
-    \end{column}
-  \end{columns}
+LCLint \footcite{larochelle_statically_2001}
+\begin{itemize}
+    \item leverage LCLint, an annotation-assisted *lightweight* detection tool, to detect buffer overflows
+    \item more expressive annotations that constrain possible values a reference contains before/after funcall
+    \item state func pre/post-cond with ~requires~ and ~ensures~ clauses (prev. also has ~unique~, ~returned~, ~modifies~, ~out~)
+    \item assumptions are ~minSet~, ~maxSet~, ~minRead~, ~maxRead~
+    \item gives decent examples of use
+    \item constraint grammar, LCLint generates constraints at expr level, resolved w/ checking at statement level
+    \item heuristics to deal with loops nicely enough
+    \item neither sound nor complete
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{CSSV}
+CSSV \footcite{dor_cssv:_2003}
+\begin{itemize}
+    \item source-to-source translation
+    \item instruments program w/ additional variables describing string attrs
+    \item adds ~assert~ statements checking for unsafe string ops
+    \item statically analyze instr. version with *integer analysis* to determine possible assertion failures
+    \item handles overlapping ptrs, etc.
+    \item  disadv: \# vars in instr. quadratic in \# in orig.
+\end{itemize}
+\end{frame}
+
+%- fullcite:bodik_abcd:_2002 <----
+%- fullcite:wagner_first_2000 
+%- disadv: proves correct fraction of array/ptr references (useful for reducing checks)
+
+\begin{frame}[fragile]{Annotations Example}
   \footnotesize
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-        Foo bar baz
-    \end{column}
-    \begin{column}{0.45\textwidth}
-%      \lstinputlisting[language=C,mathescape]{lst/spatial_cssv.c}
        \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 int main() {
     printf("hello, world!\n");
 }
 $$
         \end{lstlisting}
-    \end{column}
-  \end{columns}
 \end{frame}
 
-% TODO need to introduce type systems, semantics, syntax
+\subsubsection{Dependent Types}
 
-\subsection{Dependent Types}
-
-\begin{frame}{foo}
+\begin{frame}{A Quick Look at Syntax, Semantics, and Types}
+    Foo
 \end{frame}
+
+\begin{frame}{Dependent Types}
+    Bar
+\end{frame}
+
+% \subsection{Other/Hardware-Support}
+
+\subsection{In Review}
+
+%\begin{frame}{An Overview of Spatial Safety Approaches}
+%Several deficiencies
+%\begin{itemize}
+%  \item High runtime overhead
+%  \item Incomplete detection of spatial violations
+%  \item Incompatible pointer representations (changing memory layout)
+%  \item  Non-trivial changes to source code
+%  \item Whole program analyses (for low-overhead) [e.g. Dhurjati 2006, Necula 2005]
+%  \item Some of these aren't complete or sound
+%  \item  Completely detecting buffer overflow (i.e. bounds) in general is undecidable!
+%\end{itemize}
+%\end{frame}
+
 
 \section{Temporal Safety}
 
 \begin{frame}[fragile]{Definition and Example}
-    \footnotesize
+  \footnotesize
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+        Prevent accessing object that has been previously deallocated
+        \\
+        Some approaches:
+        \begin{itemize}
+            \item Effects and regions
+            \item Unique pointers and linear types
+            \item Ownership and borrowing
+        \end{itemize}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+%      \lstinputlisting[language=C,mathescape]{lst/spatial_plain.c}
+       \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
+int main() {
+    printf("hello, world!\n");
+}
+$$
+        \end{lstlisting}
+    \end{column}
+  \end{columns}
 \end{frame}
+
+\subsection{Dynamic Approaches}
+\begin{frame}{A Comment on Garbage Collection}
+    \footcite{boehm_garbage_1988}
+    used by ccured (Free is a noop, no double-free, no danlging pointers, heapify escaping objects)
+\end{frame}
+\begin{frame}{Other Dynamic Approaches}
+    \footcite{austin_efficient_1994}
+    \footcite{west_cuckoo:_2005}
+    % others from Other/(also from section)
+\end{frame}
+
+\subsection{Semi-Static Approaches}
 
 \end{document}
 
