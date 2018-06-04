@@ -262,12 +262,21 @@ Cuckoo \footcite{west_cuckoo:_2005}
 \end{frame}
 
 \begin{frame}[fragile]{Fat Pointers}
+  \footnotesize
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+        Foo bar baz
+    \end{column}
+    \begin{column}{0.45\textwidth}
+%      \lstinputlisting[language=C,mathescape]{lst/spatial_objs.c}
        \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 int main() {
     printf("hello, world!\n");
 }
 $$
         \end{lstlisting}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 %% - fullcite:akritidis_baggy_2009
@@ -324,15 +333,6 @@ Checked C \footcite{ruef_checked_2017}
 \end{frame}
 
 \begin{frame}[fragile]{Separate Metadata}
-       \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
-int main() {
-    printf("hello, world!\n");
-}
-$$
-        \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Separate Metadata}
   \footnotesize
   \begin{columns}[T]
     \begin{column}{0.45\textwidth}
@@ -351,6 +351,10 @@ $$
 \end{frame}
 
 \subsection{Some Static Approaches}
+% annotations provided by user
+% don't change memory layout
+% prove as much statically as possible
+% use run-time checks where static checking is not sufficient
 
 \subsubsection{Annotations}
 
@@ -394,27 +398,215 @@ CSSV \footcite{dor_cssv:_2003}
 %- fullcite:wagner_first_2000 
 %- disadv: proves correct fraction of array/ptr references (useful for reducing checks)
 
-\begin{frame}[fragile]{Annotations Example}
+\begin{frame}[fragile]{Annotations}
   \footnotesize
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+        Foo bar baz
+    \end{column}
+    \begin{column}{0.45\textwidth}
+%      \lstinputlisting[language=C,mathescape]{lst/spatial_objs.c}
        \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 int main() {
     printf("hello, world!\n");
 }
 $$
         \end{lstlisting}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \subsubsection{Dependent Types}
 
-\begin{frame}{A Quick Look at Syntax, Semantics, and Types}
-    Foo
-\end{frame}
-
 \begin{frame}{Dependent Types}
-    Bar
+    Dependent types are \emph{typed-valued functions} \footcite{pierce_advanced_2005}
+    \begin{itemize}
+        \item E.g. type family of vectors: $\texttt{Vector :: Nat}\rightarrow\texttt{*}$.
+        \item Introduce with \emph{dependent product type}: $\texttt{vecnew : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}$.
+        \item Combine as well: $\texttt{cons : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}\rightarrow\texttt{Vector(n+1)}$.
+        \item Generalizes arrow type
+        \item Based on type theory work by Martin-Lof \footcite{martin-lof_constructive_1984}
+    \end{itemize}
 \end{frame}
 
-% \subsection{Other/Hardware-Support}
+\begin{frame}{Dependent Types in Functional Languages}
+Dependent ML \footcite{xi_eliminating_1998}
+\begin{itemize}
+    \item Reduce static array bound checking to constraint satisfiability
+    \item Limit indices to integer and boolean expressions, constrainted to be linear
+\end{itemize}
+Cayenne \footcite{augustsson_cayennelanguage_1998}
+\begin{itemize}
+    \item Haskell-like language
+    \item First time full dependent types in a PL
+    \item Example typing a C-style $\texttt{printf}$ function where $\texttt{PrinftType}$ returns a type
+    \item Equivalence of two arbitrary expressions is undecidable $\Rightarrow$ type checking is undecidable
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Dependent Types in Imperative Languages}
+    $\text{Xanadu}_{0}^{\Pi,\Sigma}$ \footcite{xi_imperative_2000}
+% TODO maybe use this grammar for introduction instead of condit?
+\begin{itemize}
+    \item Restrict type index expressions to integer constraint domain
+    \item Define what it means for a type to equal/coerce into another
+    \item Programmer must supply state stype in order to type conditionals and loops
+    \item \todo{maybe add an example since I have room...}
+\end{itemize}
+\end{frame}
+% \item Allows trusted cast mechanism to supress errors
+
+\begin{frame}{Dependent Types in Imperative Languages}
+SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_2007}
+    \begin{itemize}
+        \item User-added annotations relating pointers to bounds
+        \item Expressions in types limited to local variables, constants, and arithmetic expr
+        \item Three phase pass over annotated C programs, emits C code
+            \begin{itemize}
+                \item Automatic bound variables addition
+                \item Flow-insensitive type checking (insert run-time checks)
+                \item Flow-sensitive check optimization
+            \end{itemize}
+    \end{itemize}
+\vspace{-0.3in}
+
+% here I need to exaplin what a grammer is for them
+\footnotesize{
+\begin{gather*}
+    x,y \in \text{Variables}
+    \quad
+    \text{op} \in \text{Binary ops}
+    \quad
+    n \in \text{Integers}
+    \quad
+    \text{comp} \in \text{Comparison Ops}
+\end{gather*}
+
+\vspace{-0.3in}
+
+\begin{columns}[T]
+\begin{column}{0.45\textwidth}
+\begin{alignat*}{2}
+\text{Ctors}\quad &C &&::= \text{int} \altm \text{ref} \altm ...
+\\
+\text{Types}\quad &\tau &&::= C \altm \tau_1 \ \tau_2 \altm \tau\ e
+\\
+\text{Kinds}\quad & \kappa &&::= \text{type} \altm \text{type} \rightarrow \kappa \altm \tau \rightarrow \kappa
+\\
+\text{L-exprs} \quad &l &&::= x \altm *e
+\end{alignat*}
+\end{column}
+
+\begin{column}{0.45\textwidth}
+\begin{alignat*}{2}
+\textit{Exprs}\quad &e &&::= n \altm l \altm e_1 \text{ op } e_2
+\\
+\textit{Cmds}\quad &c &&::= \text{skip} \altm c_1;c_2 \altm l := e \altm \text{assert}(\gamma) \altm
+\\
+~ & ~ && \text{let } x : \tau = e \text { in } c \altm \text{let } x = \text{new } \tau(e) \text{ in } c
+\\
+\text{Preds}\quad &\gamma &&::= e_1 \text{ comp } e_2 \altm \text{true} \altm \gamma_1 \wedge \gamma_2
+\end{alignat*}
+\end{column}
+\end{columns}
+}
+
+\vspace{0.1in}
+
+\end{frame}
+%\note{
+% kind of int is "type"
+% kind of ref is "type -> type"
+% loops, conditionals omitted for flow-insenstivei type system
+% Types restricted to only contain expressions using constatns, local variables, arbitrary arithmetic operators
+%}
+
+
+\begin{frame}{Deputy}
+Judgments for checking the well-formedness of types, local expressions, predicated expressions, and commands (which add assertions)
+
+\begin{center}
+\begin{tabular}{c}
+\infer[(\textsc{var\ write})]
+{\Gamma \vdash x \coloneqq e \Rightarrow \text{assert}(\bigwedge_{y \in \text{Dom}(\Gamma)}\gamma_y);\ x \coloneqq e }
+{x \in \text{Dom}(\Gamma) \qquad
+ \text{for\ all}(y:\tau_y) \in \Gamma,\ \Gamma \vdash y[e/x]:\tau_y[e/x] \Rightarrow \gamma_y }
+\end{tabular}
+
+\begin{tabular}{c}
+\infer[(\textsc{array\ deref})]
+{\Gamma \vdash *e; \tau \Rightarrow \gamma_e \wedge (0 < e_{len})}
+{\Gamma \vdash e: \text{array } \tau \ e_{len} \Rightarrow \gamma_e}
+\end{tabular}
+
+\begin{tabular}{c}
+\infer[(\textsc{array\ arith})]
+{\Gamma \vdash e + e': \text{array } \tau\ (e_{len} - e') \Rightarrow \gamma_e \wedge \gamma_e' \wedge (0 \leq e' \leq e_{len})}
+    {\Gamma \vdash e: \text{array } \tau\ e_{len} \Rightarrow \gamma_e
+    \quad \Gamma \vdash e':\text{int} \Rightarrow \gamma_{e'}}
+\end{tabular} 
+\end{center}
+
+\end{frame}
+% var-write is a key contribution of type system
+% $\textsc{var\ write}$ rule responsible for updates to variables in presence of dependent type variables, verifying assignment does not break any dependencies in current scope
+% For example, we can add rules for arrays:
+% also permits a coercion judgement for allowing an array to be used where a smaller one is expected
+
+\begin{frame}{Deputy}
+Support in C
+    \begin{itemize}
+        \item Generalize array constructor to possibly-null bounded pointer $\text{ptr }\tau \ lo\ hi$
+            \begin{itemize}
+                \item C-style pointer arithmetic via $\oplus$ operator
+                \item $x:\text{ptr int } b (b \oplus 8)$ // 8 integer area starting at b
+                \item $x:\text{ptr int } x (x \oplus n)$ // n integer area starting at x
+                \item $x:\text{ptr int }$ x e // from x to e
+            \end{itemize}
+        \item Dependent untion tags
+            \begin{itemize}
+                \item Leverage C idiom of providing ``tag'' indicating which union field is in use
+                \item Specify the condition for each union field to be usable
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Deputy}
+\begin{columns}[T]
+\begin{column}{0.45\textwidth}
+      \lstinputlisting[language=C,mathescape]{lst/deputy_before.c}
+\end{column}
+\begin{column}{0.45\textwidth}
+      \lstinputlisting[language=C,mathescape]{lst/deputy_after.c}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Dependent Types in Imperative Languages}
+Low-Level Liquid Types \footcite{rondon_liquid_2008}, \footcite{rondon_low-level_2010}
+\begin{itemize}
+    \item Refinement types where predicates are conjunctions over qualifiers
+    \item Functions qualified over locations they operate on
+    \item Deal with collections using \emph{location folding} for checking out a copy to do strong updates on
+\end{itemize}
+Tyr \footcite{de_araujo_tyr:_2016}
+\begin{itemize}
+    \item Augments LLVM IR with dependent point tyeps
+    \item First pass uses programmer annotations to augment program witn run-time bounds checking
+    \item LLVM optimizations remove checks always true/false
+\end{itemize}
+\end{frame}
+
+\begin{frame}{A Hybrid Approach}
+Low* \footcite{footcite:protzenko_verified_2017}
+\begin{itemize}
+    \item DSL for verified, efficient low-level programming in F* (ML-like language with dependent types)
+    \item Goal: write efficient \& verified C in a high-level language
+    \item Write F* syntax against library modelling lower-level view of C memory
+    \item Model arrays by implementation abstract buffer type using references by hyper-stacks
+    \item Translate Low* to CompCert Clight
+\end{itemize}
+\end{frame}
 
 \subsection{In Review}
 
@@ -471,6 +663,20 @@ $$
 \end{frame}
 
 \subsection{Semi-Static Approaches}
+
+\subsection{Extra Slides}
+\begin{frame}{Hardware and Other Support for Spatial Safety}
+\begin{itemize}
+    \item \footcite{arora_architectural_2006}
+    \item \footcite{devietti_hardbound:_2008}
+    \item \footcite{binary compatible, low overhead}
+      % - can reduce overhead of CCured's SEQ and WILD pointers, array bounds checking in C#
+    \item \footcite{cowan_stackguard:_1998}
+     % - inserts canaries
+    \item \footcite{hasabnis_light-weight_2012}
+     % - guard zones with good performance
+\end{itemize}
+\end{frame}
 
 \end{document}
 
