@@ -981,56 +981,185 @@ Reaps \footcite{berger_reconsidering_2002}
     \vspace{0.2in}
 \end{frame}
 
-\begin{frame}{More Regions/Effects}
-Typestate \footcite{strom_typestate:_1986} %\item TODO add few more notes Determine subset of operations permitted in a particular context
-\\
-Vault \footcite{deline_enforcing_2001} % TODO review this
-    \begin{itemize}
-        \item Keys for representing run-time resources, held-key set, type guards
-        \item Functions annotated with effect clause (pre- and post-conditions on held-key set contents)
-        \item Freed regions before leaving scope
-        \item Types enforce code must free a region
-        \item Restrict aliasing, tracks fine-grained effects (requires more annotations)
-        \item Catches Windows 2000 locking errors, I/O Request Packets ownership model corresponds to tracked types
-        % todo add example?
-    \end{itemize}
-\end{frame}
+% todo use this?
+%\begin{frame}{More Regions/Effects}
+%Typestate \footcite{strom_typestate:_1986} %\item TODO add few more notes Determine subset of operations permitted in a particular context
+%\\
+%\end{frame}
 
 \subsection{Linear Types and Ownership}
 
 % introduce
 \begin{frame}{Linear Types}
+    Linear types \footcite{girard_linear_1987},\footcite{wadler_linear_1990} ensures that every variable is used exactly \emph{once}.
     \begin{itemize}
-        \item \footcite{girard_linear_1987}
-        \item \footcite{wadler_linear_1990}
-        \item \footcite{kobayashi_quasi-linear_1999}
+        \item Allows exchange, not weakening or contraction (i.e. cannot be arbitrarily copied or discarded)
+        \item In imperative setting, non-duplicatable resource is the \emph{world} % don't want to world states at same time
+        \item Track proper, ordered use and modification of world (modelled as an array)
+        \item Efficiency: safe to destructively update an array
+        \item $\textbf{Memory management: can immediately collect used values}$ % only one reference, can show memory management does not leak
+        %\item Many read-only references (non-linear), only one reference (linear) for writing %not at same time; write must be only reference
+        %\item Paper shows how linear types can determine when an array's update operation can re-use storage in a safe way
     \end{itemize}
+\end{frame}
+% mention girard's linear logic
+
+\begin{frame}{Linear Type System}
+    \todo{augment running example syntax/semantics here}
 \end{frame}
 
 \begin{frame}{Applications}
+\footnotesize{
+$\textsc{PACLANG}$ \footcite{ennals_linear_2004}: packet processing
+  \begin{itemize}
+    \item Program network processors % with linear type system
+    \item Unique ownership property: each packet in heap is referenced by exactly one thread
+    \item Allow mutable aliasing within the same thread
+    \item Operations for a functions to 1) take ownership or 2) create local alias
+  \end{itemize}
+Clay \footcite{hawblitzel_low-level_2004} (C-like)
+  \begin{itemize}
+    \item Type-theoretic basis for giving type-safe code more control over memory
+    \item Memory is single linear array words, linearity prevents aliasing
+    \item Singleton types to type check loads, coercion functions to modify values' type safely
+    \item Type sequences to safely introduce non-linearity % todo review this
+    \item Implement several GC's using system
+  \end{itemize}
+}
+\end{frame}
+
+\begin{frame}{COGENT}
+$\textsc{cogent}$ \footcite{amani_cogent:_2016}, \footcite{oconnor_cogent:_2016}
     \begin{itemize}
-        \item \footcite{ennals_linear_2004}: packet processing
-        \item \footcite{hawblitzel_low-level_2004}: 
-        \item \footcite{tov_practical_2011}
+        \item High-level, pure, polymorphic language with linear types for writing low-level systems code
+        \item Total functions (no recursion)
+        \item Linear types for memory management and transitioning imperative C semantics to functional value semantics
+        \item Reason w/ interactive theorem prover
+        \item No trusted compiler, runtime, or garbage collector needed
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Cogent}
+\begin{frame}{COGENT}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      $\vcenter{\hbox{\includegraphics[height=18em]{fig/FIGURE_oconnor-2016_cogent-chain.PNG}}}$
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      $\vcenter{\hbox{\includegraphics[height=18em]{fig/FIGURE_oconnor-2016_example.PNG}}}$
+    \end{column}
+  \end{columns}
+\end{frame}
+
+%\notes{
+% Their verification chain is extensive.
+%Given a $\cogent$ program, the $\cogent$ compiler first generates C code.
+%A C parser then generates the semantics of this C code in Isabelle/Simpl (*A*).
+%Using the Simple code, the /AutoCoress/ tool generates a monadic functional program (*B*).
+%Then the $\cogent$ also produces the following representations:
+%  - a monomorphic A-normal /deep/ embedding of the $\cogent$ program (*C*)
+%  - a polymorphic A-normal /deep/ embeeded of the same (*D*)
+%  - an A-normal /shallow/ embedding (*E*)
+%  - a 'neat' /shallow/ embedding (syntactically close to $\cogent$ compiler input) (*F*)
+%The chain of verification involves proving that the Simpl semantics (*A*) /refines/ the
+%  monadic semantics (*B*), which /refines/ the update and value semantics of the monomorphic
+%  deep embedding (*C*), which refines the value semantics of the polymorphic embedding (*D*),
+%  which refines the HOL that is equal to the shallow embedding (*E*) and (*F*).
+%Finally, user-supplied abstract datatypes (implemented in C) are verified according to the shallow embedding (*F*).
+%The only unverified link the chain is output of the C-to-Isabelle parser that becomes Simpl code (*A*).
+%
+% kinds to determine is type can be freely shared or discarded
+%}
+
+% TODO maybe include
+%$\vcenter{\hbox{\includegraphics[height=8em]{fig/FIGURE_oconnor-2016_shallow.PNG}}}$
+
+\begin{frame}{COGENT}
     \begin{itemize}
-        \item \footcite{amani_cogent:_2016}
-        \item \footcite{oconnor_cogent:_2016}
+        % so you get a guage of the work here
+        \item 33.5 person-months for proof-automation
+        \item 10 person-months engineering the compiler
+        \item 18 person-months for design, formalization, and proof its properties
+        \item Overall it was 17,000 lines of Isabelle theorem prover code, 9,500 lines of Haskell $\textsc{cogent}$ compiler code, and 6,545 lines of ext2 $\textsc{cogent}$ code (for their example filesystem implementation), which generated 76,769 lines of Isabelle/HOL proofs and embeddings.
+        \item A good way forward (embedded low-level DSLs combined with theorem proving)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Other Linear Types}
+  Quasi-linear types \footcite{kobayashi_quasi-linear_1999}
+    \begin{itemize}
+        \item Relax linear type strong condition
+        \item Distinguish between values that must be used up in an expression vs. those that may be returned
+        \item Use $\kappa$ to control how often a variable of type $\tau^{\kappa}$ is used
+            \begin{itemize}
+                \item 0: not used at all
+                \item 1: value accessed at most once
+                \item $\omega$: accessed arbitrary number of times
+                \item $\delta$: accessed many times \emph{locally}, cannot be returned with result
+            \end{itemize}
+        \item Quasi-linear value (1) accessed as $\delta$ and then strictly as linear
+    \end{itemize}
+  Alias types \footcite{smith_alias_2000}
+    \begin{itemize}
+        \item Problem: registers must be reused for data of different types constantly
+        \item Aliasing constraints: describe shape of store; functions use to specify what they expect part of the store to look like
+        \item Location and store polymorphism: dependence between pointer types and constraints, abstract away size/shape of store
+        \item More expressive than linear: although aliasing constraints are linear, ptr values that flow through computation are not
+        %\item Constraint is mapping from locations to types; Pointer to location l has singleton type ptr(l)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Other Linear Types}
+  Vault \footcite{deline_enforcing_2001} % TODO review this
+    \begin{itemize}
+        \item Keys associate static capabilities with run-time resources, held-key set, type guards
+        \item Functions annotated with effect clause (pre- and post-conditions on held-key set contents)
+        %\item Freed regions before leaving scope % todo review
+        %\item Types enforce code must free a region % todo review
+        \item Restrict aliasing, tracks fine-grained effects (requires more annotations)
+        \item Catches Windows 2000 locking errors, I/O Request Packets ownership model corresponds to tracked types
+        % todo add example?
+    \end{itemize}
+  Ordered types for memory layout \footcite{petersen_type_2003}
+    \begin{itemize}
+        \item Restrict linear types (remove exchange property)
+        \item Variables cannot change position $\Rightarrow$ locations in memory
+        \item ``Orderly lambda calculus'' for size-preserving memory operations
+        \item Coercions to manipulate ordered variables in the frontier (combine/split to treat as different types)
+    \end{itemize}
+  Alms \footcite{tov_practical_2011}
+    \begin{itemize}
+        % TODO define ***WHY*** affine types are used here
+        \item Affine types (allow weakening, not contraction) %, i.e. values \emph{may} be dropped but \emph{not} duplicated) % contraction = duplicates variables
+        \item Separate reference to array from capability to read and write it (latter is affine)
+        \item Define $^{a}\lambda_{ms}$
+        \item Implement capability-based interface to BSD sockets % (ensure protocol set-up correctly used)
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Ownership}
     \begin{itemize}
-        \item \footcite{clarke_ownership_1998}
-        \item \footcite{boyapati_ownership_2002}
+      \item Type of an object includes its owner's name
+      \item Accessing an object requires naming its owner
+      \item Statically enforceable way of specifying object encapsulation % TODO how
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Data Races \footcite{boyapati_ownership_2002}
+    \begin{itemize}
+        \item Prevent data races and deadlocks because lock protecting object also protects encapsulated objects
+        \item \todo{one more}
+    \end{itemize}
+  Alias Protection \footcite{clarke_ownership_1998}
+    \begin{itemize}
+        \item Restricted visibility 
+    \end{itemize}
+    \begin{itemize}
         \item \footcite{fahndrich_language_2006}
-        \item \footcite{smith_alias_2000}
         \item \footcite{matsakis_rust_2014}
         \item \footcite{levy_ownership_2015}
         \item \footcite{jung_rustbelt:_2017}
+%    \item \footcite{evans_static_1996} % talk about next to rust (See my notes): deal with problems in LCLint memory management
     \end{itemize}
 \end{frame}
 
@@ -1043,9 +1172,6 @@ Vault \footcite{deline_enforcing_2001} % TODO review this
 %    \footcite{fullcite:dhurjati_memory_2003}
 %    \footcite{kedia_simple_2017}
 %        -adding manual memory amangement to high-level langauges C#/java
-%    \item \footcite{petersen_type_2003}
-%        - how to represent memory layout
-%    \item \footcite{evans_static_1996} % talk about next to rust (See my notes): deal with problems in LCLint memory management
 %\end{frame}
 
 %\begin{frame}{Hardware and Other Support for Spatial Safety}
