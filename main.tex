@@ -312,7 +312,7 @@ int sum(int *SEQ buf, int *SEQ end) {
 %% - fullcite:brunink_boundless_2011
 
 \begin{frame}[fragile]{Separate Metadata}
-Avoid fat pointers by spltting bounds and base metadata
+Avoid fat pointers by splitting bounds and base metadata
 \\
 MSCC \footcite{xu_efficient_2004}
     \begin{itemize}
@@ -704,11 +704,9 @@ Low* \footcite{protzenko_verified_2017}
     \begin{column}{0.45\textwidth}
         Prevent accessing object that has been \emph{previously deallocated}
         \\
-        Some approaches:
         \begin{itemize}
             \item Effects and regions
-            \item Unique pointers and linear types
-            \item Ownership and borrowing
+            \item Linear types, ownership, and borrowing
         \end{itemize}
     \end{column}
     \begin{column}{0.45\textwidth}
@@ -720,9 +718,8 @@ int TODO() {
 \end{lstlisting}
 Let's list the potential problems:
         \begin{itemize}
-            \item Foo
-            \item Bar
-            \item Baz
+            \item Dangling pointers/memory leaks
+            \item Double frees
         \end{itemize}
     \end{column}
   \end{columns}
@@ -732,11 +729,10 @@ Let's list the potential problems:
 Garbage collection
     \begin{itemize}
         \item Relinquish control of location and layout of objects to runtime
-        \item Non-zero overhead
+        \item Non-zero overhead, sub-par memory use (time between unreachable and reclaimed)
         \item Complete temporal safety
-        \item Sub-par memory use (time between unreachable and reclaimed)
-        \item Used by several of the spatial approaches previously listed
-        \item CCured etc. uses Boehm-Demers-Weister \footcite{boehm_garbage_1988} (free is no-op)
+        \item Used by several of the spatial approaches previously listed (e.g. CCured etc. uses Boehm-Demers-Weister \footcite{boehm_garbage_1988})
+        \item Question: can we get the compiler to do the memory deallocation for us? % will require a restriction of paradigms/cooperation by the programmer
     \end{itemize}
 \end{frame}
 % \footcite{austin_efficient_1994}
@@ -798,10 +794,10 @@ Garbage collection
         \item Binding Time Analysis: distinguish between dynamic and static data
         \item Side Effect Analysis:
             \begin{itemize}
-                \item Reference variable represented by set of points where it could have been created (``region'')
+                \item Reference variable represented by set of points where it could have been created (\alert{region})
                 \item Annotate functions with actions they take (access, assignment, creation)
             \end{itemize}
-        \item Region Inference: Compile-time determination of when to allocate regions, in which to allocate data
+        \item \alert{Region} Inference: Compile-time determination of when to allocate regions, in which to allocate data
     \end{itemize}
 \end{frame}
 
@@ -825,7 +821,7 @@ Garbage collection
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Regions in C}
+\begin{frame}{Regions in Cyclone}
     Cyclone\footcite{grossman_region-based_2002}, again!
     \begin{itemize}[<+->]
         \item Three region types: single heap region (lives forever), stack regions (local-declaration blocks), dynamic regions (lexically-scoped lifetimes)
@@ -833,11 +829,44 @@ Garbage collection
         \item Annotate pointers with regions into which they point; must be live for dereference
         \item Subtyping on lifetimes: can use region A where a region B is expected if A \emph{outlives} (is a subtype of) B
         \item Can specify partial orders on region lifetimes between pointers
-        \item Type system for tracking capability (set of live regions) when dereferencing a pointer % no closures, but existential types can hide pointers to escape scope of their regions
         \item Sane defaults: infer region annotations on pointer types  % intraprocedural analysis => need function prototypes
-        \item Static operator $\texttt{regions\_of}$ instead of effect variables
     \end{itemize}
     \vspace{0.1in}
+\end{frame}
+
+\begin{frame}[fragile]{Regions in Cyclone}
+\footnotesize{
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item Pointer can escape scope of their regions (via closures/existential types)
+        \item Type system for tracking capability (set of live regions) when dereferencing a pointer % no closures, but existential types can hide pointers to escape scope of their regions
+        \item A function's \alert{effect} is the set of regions it might access
+        \item Calculate function's effect from prototype alone
+    \end{itemize}
+    \begin{lstlisting}[language=C,mathescape,basicstyle={\footnotesize\ttfamily}]
+struct Set<$\alpha$, $\rho$, $\epsilon$> {
+    list_t<$\alpha$, $\rho$> elts;
+    int (*cmp)($\alpha$, $\alpha$; $\epsilon$);
+}
+\end{lstlisting}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+        \begin{itemize}
+        \item Type of elements not known, so use $\epsilon$ to abstract set of regions it might need to access
+        \item Fix with static operator $\texttt{regions\_of}$ instead of effect variables % explain in code
+        \end{itemize}
+\begin{lstlisting}[language=C,mathescape,basicstyle={\footnotesize\ttfamily}]
+struct Set<$\alpha$, $\rho$> {
+    list_t<$\alpha$, $\rho$> elts;
+    int (*cmp)($\alpha$, $\alpha$; regions_of($\alpha$));
+    // default effect, no need to write anyway
+}
+\end{lstlisting}
+    \end{column}
+  \end{columns}
+  }
 \end{frame}
 
 % TODO make an animation with colors describing things I talk about as I do
@@ -935,8 +964,50 @@ $\Delta;\Gamma;\gamma;\epsilon;\tau \vdash_{stmt} s$
 \end{center}
 \end{frame}
 
-\begin{frame}{Cyclone Example}
-\todo{add example code}
+\begin{frame}[fragile]{Cyclone Example}
+\footnotesize{
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+// Example prototypes
+char?$\rho$ strcpy<$\rho$,$\rho_2$>(char?$\rho$ d,
+  const char ?$\rho_2$ s);
+char?$\rho_H$ strdup<$\rho$>(const char?$\rho$ s);
+char?$\rho$ strlen<$\rho$>(const char?$\rho$ s);
+
+// Dangling pointer prevention
+int *$\rho_L$ p;
+L:{ int x = 0;
+    p = &x;
+  }
+*p = 42;
+
+// Region polymorphism
+L:{ char buf[20];
+    strcpy<$\rho_L$,$\rho_H$>(buf, "a heap pointer"); }
+\end{lstlisting}
+    \end{column}
+
+    \begin{column}{0.48\textwidth}
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+// Polymorphic Recursion
+void fact<$\rho$>(int*$\rho$ result, int n) {
+ L: { int x = 1;
+      if (n > 1) fact<$\rho_L$>(\&x,n-1);
+      *result = x*n; }
+}
+int g = 0;
+int main() { fact<$\rho_H$>(\&g, 6); return g; }
+
+// Type definitions
+struct Lst<$\rho_1$, $\rho_2$> {
+    int*$\rho_1$ hd;
+    struct Lst<$\rho_1$, $\rho_2$> *$\rho_2$ tl;
+};
+\end{lstlisting}
+    \end{column}
+    \end{columns}
+}
 \end{frame}
 
 % TODO add frame on results, anything novel they should know
@@ -983,11 +1054,10 @@ Reaps \footcite{berger_reconsidering_2002}
 
 % todo use this?
 %\begin{frame}{More Regions/Effects}
-%Typestate \footcite{strom_typestate:_1986} %\item TODO add few more notes Determine subset of operations permitted in a particular context
 %\\
 %\end{frame}
 
-\subsection{Linear Types and Ownership}
+\subsection{Linear Types, Ownership, and Borrowing}
 
 % introduce
 \begin{frame}{Linear Types}
@@ -1031,13 +1101,14 @@ Clay \footcite{hawblitzel_low-level_2004} (C-like)
 \begin{frame}{COGENT}
 $\textsc{cogent}$ \footcite{amani_cogent:_2016}, \footcite{oconnor_cogent:_2016}
     \begin{itemize}
-        \item High-level, pure, polymorphic language with linear types for writing low-level systems code
-        \item Total functions (no recursion)
-        \item Linear types for memory management and transitioning imperative C semantics to functional value semantics
+        \item High-level, pure, polymorphic language with linear types for writing low-level systems code (file systems)
+        \item Linear types $\Rightarrow$ efficient machine code with inplace updates, represent imperative C semantics
+        \item Functional value semantics for equational reasoning
         \item Reason w/ interactive theorem prover
         \item No trusted compiler, runtime, or garbage collector needed
     \end{itemize}
 \end{frame}
+% total functions (no recursion)
 
 \begin{frame}{COGENT}
   \begin{columns}[T]
@@ -1109,7 +1180,15 @@ $\textsc{cogent}$ \footcite{amani_cogent:_2016}, \footcite{oconnor_cogent:_2016}
 \end{frame}
 
 \begin{frame}{Other Linear Types}
-  Vault \footcite{deline_enforcing_2001} % TODO review this
+  Typestate \footcite{strom_typestate:_1986}
+    \begin{itemize}
+        \item Avoid nonsensical execution sequences statically
+        \item E.g. Using a value before initialization
+        \item Typestate is static invariant of each variable name at program point % i.e. need to merge control-paths, regardless of path to get to point
+        \item Define a lattice of states and typestate transition system between them
+        \item Linear types help because of restricting pointer assignment (1-1 mapping between variable names and run-time objects)
+    \end{itemize}
+  Vault \footcite{deline_enforcing_2001} % TODO review this, TODO where is best place to put this, it combines typestate with regions like Cyclone...
     \begin{itemize}
         \item Keys associate static capabilities with run-time resources, held-key set, type guards
         \item Functions annotated with effect clause (pre- and post-conditions on held-key set contents)
@@ -1144,38 +1223,54 @@ $\textsc{cogent}$ \footcite{amani_cogent:_2016}, \footcite{oconnor_cogent:_2016}
     \end{itemize}
 \end{frame}
 
-\begin{frame}
-  Data Races \footcite{boyapati_ownership_2002}
+\begin{frame}{Some Examples}
+  LCL \footcite{evans_static_1996}
     \begin{itemize}
-        \item Prevent data races and deadlocks because lock protecting object also protects encapsulated objects
-        \item \todo{one more}
+        \item $\texttt{owned}$ annotation to denote reference with obligation to release storage
+        \item $\texttt{dependent}$ annotation for sharing; programmer must ensure lifetimes are contained properly % lifetime of dependent is within lifetime of owner
     \end{itemize}
-  Alias Protection \footcite{clarke_ownership_1998}
+  Ownership for Alias Protection \footcite{clarke_ownership_1998}
     \begin{itemize}
-        \item Restricted visibility 
+      \item Two variables having ownership types with different declared object contexts cannot refer to same part of store, not aliases
     \end{itemize}
+  Races and deadlocks \footcite{boyapati_ownership_2002}
     \begin{itemize}
-        \item \footcite{fahndrich_language_2006}
-        \item \footcite{matsakis_rust_2014}
-        \item \footcite{levy_ownership_2015}
-        \item \footcite{jung_rustbelt:_2017}
-%    \item \footcite{evans_static_1996} % talk about next to rust (See my notes): deal with problems in LCLint memory management
+      \item The lock protecting object also protects encapsulated objects
+    \end{itemize}
+  Singularity \footcite{fahndrich_language_2006}
+    \begin{itemize}
+        \item Resource tracking via type system that tracks passing ownership of block to callee, possibly permanently
     \end{itemize}
 \end{frame}
 
+\begin{frame}{Rust}
+    % a conglomeration of all these topics
+    Rust \footcite{matsakis_rust_2014} \footcite{levy_ownership_2015} \footcite{jung_rustbelt:_2017}
+    \begin{itemize}
+        \item Type system enforces that objects have unique \alert{owners}
+        \item Objects may be borrowed, obeying lexical scope; borrows do not live longer than owner
+        \item Owner leaves scope $\Rightarrow$ object \alert{deallocated}
+        \item One \alert{unique} mutable borrows, or multiple immutable borrows % solves aliasing
+        \item $\texttt{unsafe}$ keyword for separating worlds (i.e. Checked C's checked regions, Cogent)
+%        \item Improves on Cogent b/c recursion, iteration, borrowing, mutable state
+        \item \todo{discuss lifetimes}
+    \end{itemize}
+\end{frame}
+
+% performing certain actions on a resource (reading and writing a memory location) should require a 'right' 
+% or capability that is uniquely owned by one alias at any point during the execution of the program.
+% althouh right is uniquly owned, it cn be transferred from one alias to another
+% can be shared in a controlled manner
+
+\begin{frame}{Rust Example}
+    \todo{enter example code}
+\end{frame}
+
 %\subsection{Extra Slides}
-
-% TODO would be nice to mention since its modern stuff
-%\begin{frame}{Other}
-%    - Control-C
-%    \footcite{fullcite:kowshik_ensuring_2002} <---------- (at least in passing)
-%    \footcite{fullcite:dhurjati_memory_2003}
-%    \footcite{kedia_simple_2017}
-%        -adding manual memory amangement to high-level langauges C#/java
-%\end{frame}
-
 %\begin{frame}{Hardware and Other Support for Spatial Safety}
 %\begin{itemize}
+%    \footcite{fullcite:kowshik_ensuring_2002} <---------- (at least in passing) (Control-C)
+%    \footcite{fullcite:dhurjati_memory_2003}
 %    \item \footcite{arora_architectural_2006}
 %    \item \footcite{devietti_hardbound:_2008}
 %    \item \footcite{binary compatible, low overhead}
@@ -1184,6 +1279,7 @@ $\textsc{cogent}$ \footcite{amani_cogent:_2016}, \footcite{oconnor_cogent:_2016}
 %     % - inserts canaries
 %    \item \footcite{hasabnis_light-weight_2012}
 %     % - guard zones with good performance
+%    \footcite{kedia_simple_2017} %        -adding manual memory amangement to high-level langauges C#/java
 %\end{itemize}
 %\end{frame}
 
