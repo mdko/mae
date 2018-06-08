@@ -153,9 +153,42 @@
 \newcommand{\altm}{\; {\color{black}\mid}\; }
 
 % listings setup
-\lstset{basicstyle=\tiny\ttfamily,columns=fixed}
+%\lstset{basicstyle=\tiny\ttfamily,columns=fixed}
 
 \xapptobibmacro{cite}{\setunit{\nametitledelim}\printfield{year}}{}{}
+
+% highlighting lines in listings
+
+% two approaches: https://tex.stackexchange.com/questions/8851/how-can-i-highlight-some-lines-from-source-code)
+\lstset{
+  basicstyle=\scriptsize\ttfamily,language=[LaTeX]Tex,breaklines=true,
+  breakautoindent=true,breakindent=2ex,
+}
+
+\tikzset{onslide/.code args={<#1>#2}{%
+  \only<#1>{\pgfkeysalso{#2}} % \pgfkeysalso doesn't change the path
+}}
+
+\makeatletter
+\newenvironment<>{btHighlight}[1][]
+{\begin{onlyenv}#2\begingroup\tikzset{bt@Highlight@par/.style={#1}}\begin{lrbox}{\@tempboxa}}
+{\end{lrbox}\bt@HL@box[bt@Highlight@par]{\@tempboxa}\endgroup\end{onlyenv}}
+
+\newcommand<>\btHL[1][]{%
+  \only#2{\begin{btHighlight}[#1]\bgroup\aftergroup\bt@HL@endenv}%
+}
+\def\bt@HL@endenv{%
+  \end{btHighlight}%   
+  \egroup
+}
+\newcommand{\bt@HL@box}[2][]{%
+  \tikz[#1]{%
+    \pgfpathrectangle{\pgfpoint{1pt}{0pt}}{\pgfpoint{\wd #2}{\ht #2}}%
+    \pgfusepath{use as bounding box}%
+    \node[anchor=base west, fill=orange!30,outer sep=0pt,inner xsep=1pt, inner ysep=0pt, rounded corners=3pt, minimum height=\ht\strutbox+1pt,#1]{\raisebox{1pt}{\strut}\strut\usebox{#2}};
+  }%
+}
+\makeatother
 
 %%% Local Variables:
 %%% mode: latex

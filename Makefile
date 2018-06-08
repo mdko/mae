@@ -1,10 +1,10 @@
 .PHONY: all clean cleanall
 
-all: main.pdf
+all: main-v2.pdf
 
-main.pdf: *.tex *.bib ucsbseal_cmyk.pdf Makefile
-	rubber --module xelatex main
+main-v2.pdf: *.tex *.bib ucsbseal_cmyk.pdf Makefile
+	rubber --module xelatex main-v2
 
 clean:
-	rubber --clean main
-	rm main.pdf
+	rubber --clean main-v2
+	rm main-v2.pdf
