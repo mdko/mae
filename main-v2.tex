@@ -202,7 +202,7 @@ Always access within object's \alert{bounds}
 Some approaches:
 \begin{itemize}
       \item Fat Pointers and Shadow Structures
-      \item Objects
+      \item Referent Objects
       \item Dependent Types
 %      \item Hardware
   \end{itemize}
@@ -212,33 +212,33 @@ Some approaches:
 \footnotesize
 \begin{lstlisting}[
     language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
-    moredelim={**[is][\btHL<1>]{@1}{@}},
+    moredelim={**[is][{\btHL<1>}]{@1}{@}},
     moredelim={**[is][{\btHL<2>}]{@2}{@}},
     moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
     moredelim={**[is][{\btHL<6>}]{@6}{@}},
+    moredelim={**[is][{\btHL<7>}]{@7}{@}},
 ]
-@2int find_token(int *data, int count, int token)@
+@2int find_token(int *data, int *end, int token)@
 {
-    @3int i = 0;@
-    @3int *p = data;@
-    @4while ((i < count) && (*p != token)) {@
-    @5    p++;@
-    @5    i++;@
+    @3int i, *p = data;@
+    @4while (p < end) {@
+    @5    if (*p == token) break;@
+    @6    p++;@
     }
-    @6return (*p == token);@
+    @7return (*p == token);@
 }
 \end{lstlisting}
 
 
-\onslide<7->
+\onslide<8->
 \footnotesize{
 Potential pointer dereference problems:
   \begin{itemize}
       \item Null
       \item Uninitialized
-      \item Out-of-bounds \note{related: data might not be an array}
+      \item Out-of-bounds \note{related: data might not be an array, unrelated}
       \item Manufactured \note{not shown here exactly}
   \end{itemize}
 }
@@ -339,6 +339,7 @@ CCured \footcite{necula_ccured:_2002}:
 \vspace{0.1in}
 
 % TODO add CCured 2002 judgment for command assertion insertion
+% TODO acutally 2005 is better
 
 Fail-Safe C \footcite{oiwa_implementation_2009}:
 \begin{itemize}
@@ -347,25 +348,105 @@ Fail-Safe C \footcite{oiwa_implementation_2009}:
 
 \end{frame}
 
-% use CCured syntax
+% use CCured syntax (2002, 2005 has a good translation definition)
 \begin{frame}[fragile]{Fat Pointers Preventing Spatial Errors}
     \begin{columns}[T]
-      \begin{column}{0.48\textwidth}
+      \begin{column}{0.44\textwidth}
 \begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily}]
-int find_token(int *data, int count, int token)
+int find_token(int *data, int *end, int token)
 {
-    int i = 0;
-    int *p = data;
-    while ((i < count) && (*p != token))
-    
+    int i, *p = data;
+    while (p < end) {
 
 
-    {
+
+        if (*p == token) break;
+
+
         p++;
-
-        i++;
     }
 
+    return (*p == token);
+}
+\end{lstlisting}
+\end{column}
+
+\pause
+
+\begin{column}{0.56\textwidth}
+
+\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily},
+    moredelim={**[is][\btHL<3>]{@3}{@}},
+    moredelim={**[is][{\btHL<4>}]{@4}{@}},
+    moredelim={**[is][{\btHL<5>}]{@5}{@}},
+    moredelim={**[is][{\btHL<6>}]{@6}{@}},
+    moredelim={**[is][{\btHL<7>}]{@7}{@}},
+    moredelim={**[is][{\btHL<8>}]{@8}{@}}
+]
+int find_token(int *@3SEQ@ data, int *@4SAFE@ end, int token)
+{
+    int i, *@5SEQ@ p = data;
+    while (p < end) {
+        @6assert(p.base != 0 &&@
+        @6         0 <= p.value &&@
+        @6         p.value < p.bound);@
+        if (*p == token) break;
+        @7p.value = p.value + (1 * sizeof(int));@
+        @7p.base  = p.base;@   // optimized out
+        @7p.bound = p.bound;@  // "           "
+    }
+    @6...(repeat lines 6-8)...@
+    @8return (*p == token);@
+}
+\end{lstlisting}
+\end{column}
+
+\end{columns}
+\end{frame}
+
+\begin{frame}{Pointer-Based -- Shadow Structures}
+Split metadata from pointer
+\begin{itemize}
+    \item Every value has linked shadow structure mirroring entire data structure
+    \item Does not handle arbitrary casts % TODO why not, add info
+    \item Out-of-sync metadata after external library code
+    \item Generate metadata for library routines returning newly allocated object
+\end{itemize}
+\vspace{-0.1in}
+CCured (2005) \footcite{necula_ccured:_2005} \note{improves original CCured work}
+  \begin{itemize}
+     \item Reduce number of WILD pointers
+     \item Use physical subtyping \footcite{siff_coping_1999} for upcasts
+     \item Special pointer carrying runtime type info for downcasts
+  \end{itemize}
+\vspace{-0.1in}
+MSCC \footcite{xu_efficient_2004}
+  \begin{itemize}
+     \item Optimized encoding loses ability to detect sub-object overflows
+  \end{itemize}
+\end{frame}
+
+% MSCC style
+\begin{frame}[fragile]{Shadow Structures}
+\begin{columns}
+\begin{column}{0.48\textwidth}
+\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily}]
+
+
+
+
+
+int find_token(int *data,
+               int *end,
+               int token)
+{
+    int i, *p = data;
+
+    while (p < end) {
+
+        if (*p == token) break;
+        p++;
+    }
 
     return (*p == token);
 }
@@ -377,110 +458,30 @@ int find_token(int *data, int count, int token)
 \begin{column}{0.48\textwidth}
 
 \begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily},
-    moredelim={**[is][\btHL<3>]{@3}{@}},
+    moredelim={**[is][{\btHL<2>}]{@2}{@}},
+    moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
-    moredelim={**[is][{\btHL<6>}]{@6}{@}}
 ]
-int find_token(int *@3SEQ@ data, int count, int token)
+@2struct ptr_info {@
+@2    void *base;@
+@2    unsigned long bound;@
+@2    struct ptr_info *link;@
+@2};@
+int find_token(int *data, @3ptr_info *data_info,@
+               int *end,  @3ptr_info *end_info,@
+               int token)
 {
-    int i = 0;
-    int *@4SAFE@ p = data;
-    while (i < count) {
-        @5assert(p.base != 0 &&@
-        @5         0 <= p.value &&@
-        @5         p.value < p.bound);@
-        if (*p != token) {
-            p++;
-            @6p.value++;@ // don't care about arithmetic
-            i++;
-        }
-    }
-    @5...(repeat lines 6-8)...@
-    return (*p == token);
-}
-\end{lstlisting}
-\end{column}
-
-\end{columns}
-\end{frame}
-
-\begin{frame}{Pointer-Based -- Shadow Structures}
-Split metadata from pointer
-\begin{itemize}
-    \item Overhead of linked shadow structures that mirror entire data structures
-    \item do not handle arbitrary casts % TODO why not
-    \item Library wrapper calls for checked pointers % TODO is this any different from fat? \note{modified by external libraries must have metadata updated at the library call via wrappers}
-    \item 1.63x overhead
-\end{itemize}
-\vspace{0.1in}
-MSCC \footcite{xu_efficient_2004}
-    \begin{itemize}
-     \item optimized encoding loses ability to detect sub-object overflows
-    \end{itemize}
-\vspace{0.1in}
-CCured (2005) \footcite{necula_ccured:_2005} \note{improves original CCured work}
-\end{frame}
-% \footcite:siff_coping_1999 (physical subtyping, used by CCured)
-
-% TODO add info down here, up there...
-%\begin{frame}{Separate Metadata}
-%CCured (2005) \footcite{necula_ccured:_2005} % Note: improves original CCured work
-%    \begin{itemize}
-%        \item Reduce number of WILD pointers
-%            \begin{itemize}
-%                \item use physical subtyping for handling upcasts
-%                \item special pointer carrying runtime-type info for downcasts
-%            \end{itemize}
-%        \item Fix compatiblity issues
-%            \begin{itemize}
-%                \item specify conversions, checking at boundaries with precompiled libraries
-%                \item separate metadata in mirror data structure (perf hit b/c of loss of locality)
-%            \end{itemize}
-%    \end{itemize}
-%\end{frame}
-
-% TODO note: MSCC: \item Unique capability attached to each memory block % for temporal errors, all I'll say right now
-
-\begin{frame}[fragile]{Shadow Structures}
-\begin{columns}
-\begin{column}{0.48\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
-int find_token(int *data, int count, int token)
-{
-    int i = 0;
-    int *p = data;
-    while ((i < count) && (*p != token)) {
+    int i, *p = data;
+    @4ptr_info  p_info = *data_info;@
+    while (p < end) {
+        @5CHECK_SPATIAL(p, sizeof(*p), p_info);@
+        if (*p == token) break;
         p++;
-        i++;
     }
+    @5CHECK_SPATIAL(p, sizeof(*p), p_info);@
     return (*p == token);
 }
-\end{lstlisting}
-\end{column}
-
-\pause
-
-\begin{column}{0.48\textwidth}
-\begin{itemize}
-\footnotesize{
-    \item $\texttt{CHECK\_SPATIAL}$ and $\texttt{CHECK\_TEMPORAL}$ inserted around pointer dereferences
-}
-\end{itemize}
-
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
-TODO fix!
-struct ptr_info {
-    void *base;
-    unsigned long size;
-    capability *cap_ptr;
-    unsigned long cap_index;
-    struct ptr_info *link;
-};
-struct stu_info {
-    struct_ptr_info name_info;
-};
-struct stu_info s_info;
 \end{lstlisting}
     \end{column}
   \end{columns}
@@ -489,90 +490,143 @@ struct stu_info s_info;
 % TODO question: where is table stored (heap or stack?)
 % TODO insert table-of-contents
 
-\subsection{Objects}
+\subsection{Referent Objects}
 
-\begin{frame}{Objects}
+\begin{frame}[fragile]{Referent Objects}
 Objects
-    \begin{itemize}[<+->]
-        \item Associate metadata with \alert{objects} themselves, not pointers
-        \item Global database relates every allocated address to metadata of corresponding object
-        \item Every pointer to same object shares same metadata
-        \item Idea: check pointer manipulations/arith (not deref) to ensure resultant pointer points to valid object
-%        \item metadata tracked per object, associated with location of object in memory
-        \item Advantages:
-        \begin{itemize}
-            \item Compatible with uninstrumented code \note{no memory layout change; if pointer updated by untrusted module, metadata out-of-sync}
-        \end{itemize}
-        \item Disadvantages:
-        \begin{itemize}
-            \item Special mechanisms to handle legal OOB pointers \note{since going 1 past array undereferenced is legal C}
-            \item Splay-tree object lookup overhead
-            \item Incomplete spatial safety: sub-object overflows \note{type casts, mem corruption in objects, C allows ptr arith in struct fields}
-%TODO not talking about temporal yet: mention in 2nd half \item Incomplete temporal safety: dangling pointer within bounds of newly allocated object
+\footnotesize
+\begin{columns}[T]
+\begin{column}{0.45\textwidth}
+\begin{itemize}[<+->]
+    \item Associate metadata with \alert{objects} themselves, not pointers
+    \item Global database relates every allocated address to corresponding object metadata \note{updating on alloc, dealloc, on function entry/exit for stack-based objects, program startup for global object}
+    \item Every pointer to same object shares same metadata
+    \item Bounds check on \alert{pointer arithmetic} to ensure validity of derived poitners \note{i.e. point to same object}
+\end{itemize}
+\end{column}
 
-%    - very good example: (top of pg 4)
-%      """
-%        struct {char str[8]; void (*func)(); } node;
-%        char *ptr = ...
-%      """
+\pause
 
-        \end{itemize}
-    \end{itemize}
+\begin{column}{0.45\textwidth}
+Advantages:
+\begin{itemize}
+  \item Compatible with uninstrumented code \note{no memory layout change; if pointer updated by untrusted module, metadata out-of-sync}
+\end{itemize}
+\pause
+Disadvantages:
+\begin{itemize}
+  \item Special mechanisms to handle legal OOB pointers \note{since going 1 past array undereferenced is legal C}
+  \item Splay-tree object lookup overhead
+  \item Incomplete spatial safety: \alert{sub-object overflows} \note{type casts, mem corruption in objects, C allows ptr arith in struct fields}
+\end{itemize}
+\pause
+
+\begin{lstlisting}[
+    language=C,numbers=left,mathescape,basicstyle={\tiny\ttfamily},
+    moredelim={**[is][{\btHL<1>}]{@1}{@}},
+    moredelim={**[is][{\btHL<2>}]{@2}{@}},
+    moredelim={**[is][{\btHL<3>}]{@3}{@}}
+]
+struct {char str[8]; void (*func)(); } node;
+char *ptr = node.str
+strcpy(ptr, "overflow...");
+\end{lstlisting}
+\end{column}
+\end{columns}
+
 \end{frame}
 
-% TODO possibly "Applied to linux kernel: Criswell Secure virtual arch 2007"
+% TODO show in memory example of subobject problem
 
 \note[itemize]{
-\item "Because nested objects (e.g., an array of structures) are assigned base and bound addresses that span the entire allocated region, it is impossible to detect sub-object overflows if an out-of-bounds pointer to an inner object remains within bounds of the outer object."
+\item Because nested objects (e.g., an array of structures) are assigned base and bound addresses
+\item that span the entire allocated region, it is impossible to detect sub-object overflows if an
+\item out-of-bounds pointer to an inner object remains within bounds of the outer object.
 }
+
+% TODO possibly "Applied to linux kernel: Criswell Secure virtual arch 2007"
 
 \begin{frame}{Object Approaches}
 J\&K \footcite{jones_backwards_1997}
     \begin{itemize}
-       \item Maintain table of all known valid storage objects
-       \item Map a ptr to a desciptor of the object into which it points
-       \item Pad objects w/ extra byte 
-       \item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
-       \item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
-       \item incomplete b/c cannot pad parameters (would change layout)
+       %\item Maintain table of all known valid storage objects
+       %\item Map a ptr to a desciptor of the object into which it points
+       \item Pad objects w/ extra byte
+       %\item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
+       %\item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
+       \item Incomplete because cannot pad parameters \note{would change layout}
        \item 11-12x overhead
     \end{itemize}
 \vspace{0.2in}
 
 CRED \footcite{ruwase_practical_2004}
     \begin{itemize}
-      \item more generic solution
+      \item More generic solution \todo{how}
       \item 2x overhead
     \end{itemize}
 \vspace{0.2in}
 
 SafeCode \footcite{dhurjati_2006_backwards}
     \begin{itemize}
-        \item build on J\&K, use automatic pool allocation (Lattner: "Automatic pool alloc: imrpoving" 2005)
-        \item APA: partitions memory based on static points-to analysis
-        \item allows using separate, smaller data structures to store bounds metadata for each partition
+        \item Use automatic pool allocation (APA) \footcite{lattner_automatic_2005} \note{builds on JK, APA: partitions memory based on static points-to analysis}
+        \item Use separate, \alert{smaller} data structures to store bounds metadata for \alert{each partition}
         \item 1.2x overhead
     \end{itemize}
 \vspace{0.2in}
 
 BBC \footcite{akritidis_baggy_2009}
     \begin{itemize}
-    \item Fastest object bounds checker
-    \item trades memory for performance
-    \item pads every object => size is power of two, aligns base addresses to be multiple of their padded size
-    \item compact bounds representation, efficient way to look up object bounds
-    \item 0.6x overhead (on SPECINT 2000 benchmark)
+    \item Trades memory for performance \note{fastest object bounds checker}
+    \item Pads every object s.t. size is power of two, aligns base addresses to be multiple of their padded size
+    \item Compact bounds representation, efficient way to look up object bounds
+    \item 0.6x overhead \note{on SPECINT 2000 benchmark}
     \end{itemize}
 \vspace{0.2in}
+% TODO read this paper more: great succinct explanation of this approach (p 2)
 
-PariCheck \footcite{younan_paricheck_2010}
-    \begin{itemize}
-        \item like BBC, faster/lower overhead
-    \end{itemize}
+PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead}
 \end{frame}
 
 \begin{frame}{Objects for Spatial Safety}
-    \todo Example of Object-approach
+\begin{columns}[T]
+\begin{column}{0.45\textwidth}
+%\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\small\ttfamily}]
+%int find_token(int *data, int *end, int token)
+%{
+%    int i, *p = data;
+%    while (p < end) {
+%        if (*p == token) break;
+%        p++;
+%    }
+%    return (*p == token);
+%}
+%\end{lstlisting}
+\end{column}
+
+\begin{column}{0.45\textwidth}
+%\begin{lstlisting}[
+%    language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
+%    moredelim={**[is][{\btHL<1>}]{@1}{@}},
+%    moredelim={**[is][{\btHL<2>}]{@2}{@}},
+%    moredelim={**[is][{\btHL<3>}]{@3}{@}},
+%    moredelim={**[is][{\btHL<4>}]{@4}{@}},
+%    moredelim={**[is][{\btHL<5>}]{@5}{@}},
+%    moredelim={**[is][{\btHL<6>}]{@6}{@}},
+%    moredelim={**[is][{\btHL<7>}]{@7}{@}},
+%]
+%@2int find_token(int *data, int *end, int token)@
+%{
+%    @3int i, *p = data;@
+%    @4while (p < end) {@
+%    @5    if (*p == token) break;@
+%    @6    p++;@
+%    }
+%    @7return (*p == token);@
+%}
+%\end{lstlisting}
+\end{column}
+
+\end{columns}
 \end{frame}
 
 % Mudflap: Eigler 2003
@@ -593,30 +647,31 @@ PariCheck \footcite{younan_paricheck_2010}
 %      \end{itemize}
 %\end{frame}
 
-% Finish with hybrid approach (Softbound and Checked C?)
-\begin{frame}{Metadata}
+\begin{frame}{Softbound}
+\footnotesize
 Softbound \footcite{nagarakatte_softbound:_2009}
     \begin{itemize}
-            % todo add in notes
-        \item Insert runtime bounds checks, consulting disjoint metadata via table lookup
-%        \item \todo{fix disjoint shadow data structure by ...}
-        \item Handles arbitrary casts, sub-object overflows not covered by MSCC % TODO what do I mean here?
-        \item Transforms every func. decl. and call-site to pass base and bound arguments % for metadata propagation
+        \item Metadata for each pointer, stored in global lookup table \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
+        \item Runtime bounds checks on each dereference
+        \item Propagate metadata as extra arguments \note{to function calls, wrappers for commonly-used libraries, must transform every func decl/call-site, or shadow stack (nagarakatte thesis)}
+        \item Advantages:
+            \begin{itemize}
+                \item No sub-object overflow problem \note{not handled in MSCC}
+                \item Arbitrary casts allowed \note{just check ptr involved in casts on derfernce w.r.t to its metadata}
+                \item Complete spatial safety
+                \item Separate compilation
+            \end{itemize}
+        \item Disadvantages:
+            \begin{itemize}
+                \item Foo
+            \end{itemize}
+        \item 67\% overhead
+%        \item Must protect every module for *complete* safety (untrusted module can modify ptr, table is out-of-sync)
+%        \item Only store metadata in disjoint space for pointers in memory, perform metadata loads/stores only when loaded/stored value from/into memory loc is a ptr
+%        \item Wrappers for commonly used libraries
     \end{itemize}
 \end{frame}
-
-\begin{frame}{Separate Metadata}
-Checked C \footcite{ruef_checked_2017}
-    \begin{itemize}
-        \item Extend C with two \emph{checked pointer types}, automatically rewrite code to use when possible
-        \item Derefence-only (no arith.) pointer, arithmetic-supporting (possibly null-terminated) pointer with bounds in type
-%        \item $\verb{_Ptr<T>}$, a pointer for dereference only (no arith)
-%        \item $\verb{_Array_ptr<T>}$ and $\verb{_Nt_array_ptr<T>_}$, supporting arith w/ bounds declarations in type (latter is null-terminated)
-        \item Isolate (un)safe code with \emph{checked code regions} at file/func/block level; prevent unchecked pointer usage and certain casts
-        \item Cannot blame checked code for violation
-%       \item Compiler confirms restrictions maintained, inserts checks on ptr access
-    \end{itemize}
-\end{frame}
+% TODO lookup how 'lookup works'
 
 % TODO update running example, or add in softbounds pictures! (or reserve for CETS)
 %\begin{frame}[fragile]{Separate Metadata}
@@ -895,6 +950,26 @@ T\'yr \footcite{de_araujo_tyr:_2016}
 \vspace{0.2in}
 \end{frame}
 
+\begin{frame}{Checked C} % restricted form of dependent types
+Checked C \footcite{ruef_checked_2017}
+    \begin{itemize}
+%        \item Focus on interoperablity, usability, performance
+%        \item Discovers safely-used ptrs, rewriting them to be checked
+%        \item Normal C pointers
+        \item associated bounds expressions with each $\_Array\_ptr<T>$ type to indicate where bounds are stored
+        \item Extend C with two \emph{checked pointer types} \note{automatically rewrite code to use when possible}
+            \begin{itemize}
+                \item foo
+            \end{itemize}
+        \item Derefence-only (no arith.) pointer, arithmetic-supporting (possibly null-terminated) pointer with bounds in type
+%        \item $\verb{_Ptr<T>}$, a pointer for dereference only (no arith)
+%        \item $\verb{_Array_ptr<T>}$ and $\verb{_Nt_array_ptr<T>_}$, supporting arith w/ bounds declarations in type (latter is null-terminated)
+        \item Isolate (un)safe code with \emph{checked code regions} at file/func/block level; prevent unchecked pointer usage and certain casts
+        \item Cannot blame checked code for violation
+%       \item Compiler confirms restrictions maintained, inserts checks on ptr access
+    \end{itemize}
+\end{frame}
+
 \begin{frame}{A Hybrid Approach}
 Low* \footcite{protzenko_verified_2017}
 \begin{itemize}
@@ -944,7 +1019,7 @@ Really boils down to:
 \todo{add new code for temporal example}
 \begin{lstlisting}[
     language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
-    moredelim={**[is][\btHL<1>]{@1}{@}},
+    moredelim={**[is][{\btHL<1>}]{@1}{@}},
     moredelim={**[is][{\btHL<2>}]{@2}{@}},
     moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
@@ -977,8 +1052,8 @@ Potential pointer dereference problems:
 \begin{frame}{A Comment on Garbage Collection}
 Garbage collection
     \begin{itemize}
-        \item Relinquish control of location and layout of objects to runtime
-        \item Non-zero overhead, sub-par memory use (time between unreachable and reclaimed)
+        \item Relinquish control of object location and layout to runtime \note{disallow free}
+        \item Non-zero overhead, sub-par memory use (drag) \note{time between unreachable and reclaimed}
         \item Complete temporal safety
         \item Used by several of the spatial approaches previously listed (e.g. Fail-Safe C, CCured etc. uses Boehm-Demers-Weister \footcite{boehm_garbage_1988})
         \item Others like Cling \footcite{akritidis_cling:_???} rely on a special allocators % TODO
@@ -1614,8 +1689,7 @@ Work
     \end{center}
 \end{frame}
 
-\subsection{Extra Slides}
-
+%\subsection{Extra Slides}
 %\begin{frame}{Hardware and Other Support for Spatial Safety}
 %\begin{itemize}
 % spin os
