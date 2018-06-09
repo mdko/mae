@@ -739,13 +739,18 @@ Softbound \footcite{nagarakatte_softbound:_2009}
 
 \begin{frame}{Dependent Types}
     Dependent types are \emph{typed-valued functions} \footcite{pierce_advanced_2005}
+    % type family of vectors
+    % dependent product type
+\begin{center}
+   $\texttt{Vector : Nat}\rightarrow\texttt{*}$
+   $\texttt{vecnew : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}$
+   $\texttt{cons : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}\rightarrow\texttt{Vector(n+1)}$
+\end{center}
+
     \begin{itemize}
-        \item E.g. type family of vectors: $\texttt{Vector : Nat}\rightarrow\texttt{*}$.
-        \item Introduce with \alert{dependent product type}: $\texttt{vecnew : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}$.
-        \item Combine as well: $\texttt{cons : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}\rightarrow\texttt{Vector(n+1)}$.
-        %\item Generalizes arrow type % TODO Do i need this?
         \item Based on type theory work by Martin-L\:of \footcite{martin-lof_constructive_1984}
-        \item \todo{Explain inherent undecidability}
+        \item Undecidability of type checking: arbitrary computation/proof to establish equality of two types
+        \item Various of following approaches work on definining equality and restricting forms of index terms
     \end{itemize}
 \end{frame}
 
@@ -1425,47 +1430,52 @@ Reaps \footcite{berger_reconsidering_2002}
 \end{frame}
 
 \begin{frame}[fragile]{Regions in Cyclone}
-\footnotesize{
+\footnotesize
+
   \begin{columns}[T]
-    \begin{column}{0.46\textwidth}
-    \begin{itemize}
+    \begin{column}{0.50\textwidth}
+      \begin{itemize}[<+->]
         \item Pointer can escape scope of their regions \note{via closures/existential types}
         \item Type system tracks \alert{capability} (set of live regions) on pointer dereference % no closures, but existential types can hide pointers to escape scope of their regions
         \item A function's \alert{effect} is the set of regions it might access
         \item Calculate function's effect from prototype alone
-    \end{itemize}
-    \begin{lstlisting}[language=C,mathescape,basicstyle={\footnotesize\ttfamily}]
+        \item Type of elements not known, so use $\epsilon$ to abstract set of regions it might need to access
+        \item Fix with static operator $\texttt{regions\_of}$ instead of effect variables % TODO review what effect variables are
+      \end{itemize}
+    \end{column}
+
+    \pause
+
+\begin{column}{0.48\textwidth}
+
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
 struct Set<$\alpha$, $\rho$, $\epsilon$>
 {
     list_t<$\alpha$, $\rho$> elts;
     int (*cmp)($\alpha$, $\alpha$; $\epsilon$);
 }
 \end{lstlisting}
-    \end{column}
 
 \pause
 
-    \begin{column}{0.52\textwidth}
-        \begin{itemize}
-        \item Type of elements not known, so use $\epsilon$ to abstract set of regions it might need to access
-        \item Fix with static operator $\texttt{regions\_of}$ instead of effect variables % TODO review what effect variables are
-        \end{itemize}
-        \vspace{0.6in}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\footnotesize\ttfamily}]
+\begin{lstlisting}[
+    language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
+    moredelim={**[is][{\btHL<8>}]{@8}{@}},
+]
 struct Set<$\alpha$, $\rho$>
 {
     list_t<$\alpha$, $\rho$> elts;
-    int (*cmp)($\alpha$, $\alpha$; regions_of($\alpha$));
-    // default effect
+    int (*cmp)($\alpha$, $\alpha$; @8regions_of}($\alpha$)@);
 }
 \end{lstlisting}
-    \end{column}
-  \end{columns}
-  }
+
+\end{column}
+\end{columns}
+
 \end{frame}
 
 % TODO make an animation with colors describing things I talk about as I do
-\begin{frame}{Cyclone}
+\begin{frame}{Some Cyclone Abstract Syntax}
 \scriptsize{
 \begin{alignat*}{2}
 \text{kinds}\quad &\kappa &&::= T \altm R
@@ -1499,33 +1509,47 @@ struct Set<$\alpha$, $\rho$>
 
 % TODO make a tikzpicture explaining/pointing to each part of judgment
 \begin{frame}{Example Cyclone Judgments}
-$\Delta;\Gamma;\gamma;\epsilon;\tau \vdash_{stmt} s$
-\\
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+     $\Delta;\Gamma;\gamma;\epsilon;\tau \vdash_{stmt} s$
+    \end{column}
+    \begin{column}{0.32\textwidth}
+     $\Delta;\Gamma;\gamma;\epsilon \vdash e\ :\ \tau$
+    \end{column}
+    \begin{column}{0.32\textwidth}
+     $\Gamma \vdash \epsilon \Rightarrow \rho$
+    \end{column}
+  \end{columns}
+
+\pause
+
 $\Delta: \text{in-scope type/region vars}$
+\pause
+\\
 $\Gamma: \text{mapping of in-scope vars to types}$
+\pause
+\\
 $\gamma: \text{constraints relating lifetimes}$
+\pause
+\\
 $\epsilon: \text{capability, i.e. live regions}$
 % Delta holds type and region variables in scope
 % Gamma holds value variables in scope and types
 % \gamma records partial order constraints relating region lifetimes
 % \epsilon records capability (which regions in \Delta are live)
 % tau is type e must have in any statement of form return e
+\pause
 
 % expressions access memory can be proven to be live from epsilon and gamma
 \begin{center}
-\begin{tabular}{c}
+\begin{tabular}{cc}
 \infer[(\textsc{var})]
 {\Delta;\Gamma;\gamma;\epsilon \vdash x_\rho : \Gamma(x_\rho)}
-{\gamma \vdash \Rightarrow \rho}
-\end{tabular}
-
-\pause
-\vspace{0.1in}
-
-\begin{tabular}{c}
+{\gamma \vdash \epsilon \Rightarrow \rho}
+    &
 \infer[(\textsc{deref})]
 {\Delta;\Gamma;\gamma;\epsilon \vdash \ast e:\tau}
-{\Delta;\Gamma;\gamma;\epsilon \vdash e:\tau \ast \rho \qquad \gamma \vdash \Rightarrow \rho}
+{\Delta;\Gamma;\gamma;\epsilon \vdash e:\tau \ast \rho \qquad \gamma \vdash \epsilon \Rightarrow \rho}
 \end{tabular}
 
 \pause
@@ -1765,16 +1789,6 @@ Work
     \vspace{0.1in}
 \end{frame}
 
-
-%  Alias types \footcite{smith_alias_2000}
-%    \begin{itemize}
-%        \item Problem: registers must be reused for data of different types constantly
-%        \item Aliasing constraints: describe shape of store; functions use to specify what they expect part of the store to look like
-%        \item Location and store polymorphism: dependence between pointer types and constraints, abstract away size/shape of store
-%        \item More expressive than linear: although aliasing constraints are linear, ptr values that flow through computation are not
-%        %\item Constraint is mapping from locations to types; Pointer to location l has singleton type ptr(l)
-%    \end{itemize}
-
 \begin{frame}{Other Linear Types}
 \footnotesize
   Vault \footcite{deline_enforcing_2001} % TODO review this, TODO where is best place to put this, it combines typestate with regions like Cyclone...
@@ -1784,6 +1798,7 @@ Work
         \item Functions annotated with effect clause (pre- and post-conditions on held-key set contents)
         %\item Freed regions before leaving scope % todo review
         %\item Types enforce code must free a region % todo review
+        %\item static enforcement of various protocols
         \item Restrict aliasing, tracks fine-grained effects (requires more annotations)
         \item Catches Windows 2000 locking errors, IRP ownership model corresponds to tracked types
         % IRP = I/O Request Packets
@@ -1797,32 +1812,17 @@ Work
         \item ``Orderly lambda calculus'' for size-preserving memory operations
         \item Coercions to manipulate ordered variables in frontier (combine/split to treat as different types)
     \end{itemize}
-%  \vspace{-0.15in}
-  See also: Alias types \footcite{smith_alias_2000}, Alms \footcite{tov_practical_2011}
   \vspace{0.1in}
-%  Alms \footcite{tov_practical_2011}
-%    \begin{itemize}
-%        % TODO define ***WHY*** affine types are used here
-%        \item Affine types (allow weakening, not contraction) %, i.e. values \emph{may} be dropped but \emph{not} duplicated) % contraction = duplicates variables
-%        \item Separate reference to array from capability to read and write it (latter is affine)
-%        \item Define $^{a}\lambda_{ms}$
-%        \item Implement capability-based interface to BSD sockets % (ensure protocol set-up correctly used)
-%    \end{itemize}
 \end{frame}
 
 \begin{frame}{Ownership}
-    \begin{itemize}
-      \item Type of an object includes its owner's name
-      \item Accessing an object requires naming its owner
-      %\item Statically enforceable way of specifying object encapsulation % TODO how
-        % todo add three or fourt bullets, show how next papers do it
-        % todo end with singularity example!
-      \item \todo{Show example}
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Some Examples}
 \footnotesize
+Ownership
+    \begin{itemize}
+      \item Every object has a unique owner
+      \item Type include owner's name, accessing an object requires naming its owner
+      % \item Involves work on aliasing
+    \end{itemize}
   LCL \footcite{evans_static_1996}
     \vspace{-0.1in}
     \begin{itemize}
@@ -1847,20 +1847,51 @@ Work
   \vspace{0.1in}
 \end{frame}
 
+% what rust's type system is based on
+\begin{frame}{Some Practical Affine Types}
+  Alms \footcite{tov_practical_2011}
+    \begin{itemize}
+        \item Practical and general purpose
+        \item Affine types: a \emph{weakening} of linear types: can drop but not duplicate
+        \item Affine capabilities: separate a read-only reference to array from an affine writeable reference
+        \item Define $^{a}\lambda_{ms}$ (based on System $F^{\omega}_{<:}$) and proof of soundness \note{types are maintained during evaluation, assuming no divergence}
+        \item Implemented a capability-based interface to Berkeley sockets
+        %TODO have they used it for memory management?
+    \end{itemize}
+\end{frame}
+
+% TODO fix
 \begin{frame}{Rust}
     % a conglomeration of all these topics
-    Rust \footcite{matsakis_rust_2014}\ \ \footcite{levy_ownership_2015}\ \ \footcite{jung_rustbelt:_2017}
+    Rust \footcite{matsakis_rust_2014} \ \footcite{jung_rustbelt:_2017}
+%\begin{columns}[T]
+%\begin{column}{0.52\textwidth}
+%\begin{lstlisting}[
+%    language=Rust,numbers=left,mathescape,basicstyle={\small\ttfamily}]
+%let x = Foo::new();
+%let y = x;
+%printf("{}", x);
+%\end{lstlisting}
+%
+%\pause
+%
+%\begin{lstlisting}[
+%    language=Rust,numbers=left,mathescape,basicstyle={\small\ttfamily}]
+%let x = Foo::new();
+%let y = x;
+%printf("{}", x);
+%\end{lstlisting}
     \begin{itemize}
+        \item Ownership \note{every value has uniquer owner}
+        \item Lifetimes
         \item Type system enforces that objects have unique \alert{owners}
-        \item Objects may be borrowed, obey lexical scope; borrows do not live longer than owner
+        \item Objects may be borrowed, obey lexical scope; borrows do not live longer than owner \note{like regions}
         \item Owner leaves scope $\Rightarrow$ object \alert{deallocated}
         \item One \alert{unique} mutable borrows, or multiple immutable borrows % solves aliasing
         \item $\texttt{unsafe}$ keyword for separating worlds %(i.e. Checked C's checked regions, Cogent) % TODO mention Cogent?!
 %        \item Improves on Cogent b/c recursion, iteration, borrowing, mutable state
-        \item \todo{discuss lifetimes}
     \end{itemize}
 \end{frame}
-
 \note[itemize]{
 \item performing certain actions on a resource (reading and writing a memory location) should require a 'right' 
 \item or capability that is uniquely owned by one alias at any point during the execution of the program.
@@ -1868,17 +1899,30 @@ Work
 \item can be shared in a controlled manner
 }
 
-\begin{frame}{Rust Example}
-    % TODO add example from a rust OS, describing how some development has been made on rust OSes too, it is feasible
-    \todo{enter example code}
+\begin{frame}{A Rust OS}
+Rust OS \footcite{levy_ownership_2015}
+    \begin{itemize}
+        \item Ownership \emph{hinders} resource sharing
+        \item AMM not optimized for HW resources/device drivers?
+        \item Closures' req for dynamic memory is bad for embedded systems
+    \end{itemize}
+\todo{another attempt}
+\end{frame}
+
+\begin{frame}{Quick Temporal Recap}
+    \begin{itemize}
+      \item Capabilities and pointer-based metadata \note{can leverage info from spatial techniques to get full temporal safety}
+      \item Regions \note{look toward effect types as an alternative to GC}
+      \item Linear types \note{deallocate after use}
+      \item Ownership and borrowing \note{unique owners help determine who is in charge, prevent data races, responsibility for cleaning}
+    \end{itemize}
 \end{frame}
 
 \begin{frame}{Conclusion}
     \begin{itemize}[<+->]
-    \item Memory errors $\Rightarrow$ \emph{type errors}
-    \item \emph{Static} memory management % like stack-based approach, important for embedded systems
-    \item Be reasonable % dynamic approaches still needed
-    \item Be optimistic % static has come a long way
+        \item Memory errors $\Rightarrow$ \emph{type errors}
+        \item \emph{Static} automatic memory management % like stack-based approach, important for embedded systems
+        \item Be reasonable \uncover{and optimistic} % dynamic approaches still needed, static has come a long way
     \end{itemize}
 \end{frame}
 
@@ -1911,6 +1955,17 @@ Work
 %  seL4
 %\end{itemize}
 %\end{frame}
+
+\begin{frame}{Alias Types}
+  Alias types \footcite{smith_alias_2000}
+    \begin{itemize}
+        \item Problem: registers must be reused for data of different types constantly
+        \item Aliasing constraints: describe shape of store; functions use to specify what they expect part of the store to look like
+        \item Location and store polymorphism: dependence between pointer types and constraints, abstract away size/shape of store
+        \item More expressive than linear: although aliasing constraints are linear, ptr values that flow through computation are not
+        \item Constraint is mapping from locations to types; Pointer to location l has singleton type ptr(l)
+    \end{itemize}
+\end{frame}
 
 \begin{frame}{Object-Based Temporal Safety}
 \begin{itemize}
