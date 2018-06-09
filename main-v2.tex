@@ -781,7 +781,7 @@ $\text{Xanadu}_{0}^{\Pi,\Sigma}$ (C-like) \footcite{xi_imperative_2000}
 
 \begin{frame}{Dependent Types in Imperative Languages}
 SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_2007}, \footcite{anderson_static_2007}
-\vspace{-0.1in}
+%\vspace{-0.1in}
     \begin{itemize}[<+->]
         \item User-added annotations relating pointers to bounds
             \begin{itemize}
@@ -1129,19 +1129,19 @@ Low* \footcite{protzenko_verified_2017}
 
 \begin{frame}{Quick Spatial Recap}
 Spatial Safety
-\begin{itemize}
-    \item Unsafe languages like C conflate arrays and pointers, casts eliminate any semblance of type guarantees \note{types are just for size}
-    \item Completely detecting buffer overflow in general is undecidable \note{so we try runtime things}
-    \item Fat pointers: complete spatial safety at cost of compatibility
-    \item Referent objects: partial safety and better compatibility
-    \item Dependent types: prove in-bounds access at compile-time, emit run-time checks for full safety
-    \item Solution seems to be (besides type-safe language):
-        \begin{itemize}
-            \item Restrict C
-            \item Limited form of bounds type information
-            \item Constraint solving
-            \item Runtime checks
-        \end{itemize}
+\begin{itemize}[<+->]
+    \item Arrays and pointers \note{Unsafe languages like C conflate arrays and pointers, casts eliminate any semblance of type guarantees, types are just for size}
+    \item Undecidable \note{Completely detecting buffer overflow in general is undecidable, so we try runtime things}
+    \item Fat pointers \note{complete spatial safety at cost of compatibility}
+    \item Referent objects \note{partial safety and better compatibility}
+    \item Dependent types \note{prove in-bounds access at compile-time, emit run-time checks for full safety}
+%    \item Solution% seems to be
+%        \begin{itemize}
+%            \item Restrict C
+%            \item Limited form of bounds type information
+%            \item Constraint solving
+%            \item Runtime checks
+%        \end{itemize}
 \end{itemize}
 \end{frame}
 
@@ -1157,6 +1157,7 @@ Prevent accessing object that has been \emph{previously deallocated}
 \end{itemize}
 \end{frame}
 
+% todo
 \begin{frame}[fragile]{Temporal Safety Example}
 \footnotesize
 \todo{add new code for temporal example}
@@ -1206,7 +1207,6 @@ Garbage collection
         \item Used by several of the spatial approaches previously listed (e.g. Fail-Safe C, CCured etc. uses Boehm-Demers-Weister \footcite{boehm_garbage_1988})
         \item Others like Cling \footcite{akritidis_cling:_???} rely on a special allocators % TODO
             \note{Replace malloc: address space re-use only among objects of same type and alignment (type-safe memory re-use)}
-        \item Can we get the \alert{compiler} to do the memory deallocation for us? % will require a restriction of paradigms/cooperation by the programmer
     \end{itemize}
 \end{frame}
 % \footcite{austin_efficient_1994}
@@ -1242,25 +1242,35 @@ Several of the pointer- and object-based approaches in the previous section also
 
 \subsection{Effects and Regions}
 
+\begin{frame}{The Question}
+Can we get the \alert{compiler} to do the memory deallocation for us? % will require a restriction of paradigms/cooperation by the programmer
+\\
+Can we statically determine the lifetimes/last-uses of all values and remove them? \note{like automatic variables put on/popped off stack}
+\end{frame}
+
+% let's begin with effects and regions
+
 \begin{frame}{Effects}
     Effect types describe the \emph{effects} of the computation leading to a value \footcite{pierce_advanced_2005}
     \\
-    \todo{show simple very simple example}
-    \todo{insert some good intro paper}
+    \todo{show how to briefly annotate our example}
 \end{frame}
 
 \begin{frame}{Effects}
-    Fluent Languages \footcite{gifford_integrating_1986}
+    Fluent Languages \footcite{gifford_integrating_1986}, MFX \footcite{lucassen_polymorphic_1988}
   \begin{columns}[T]
     \begin{column}{0.68\textwidth}
-        \begin{itemize}
-            \item Mix functional and imperative languages % TODO why?!
+        \begin{itemize}[<+->]
+            \item Mix functional and imperative languages \note{determine which can be parallelized}
             \item Every expression has a \emph{effect class}, restricting which subroutines or sublanguage features it may use
             \item Identify memoizable (referrentially transparent) expressions via a side effect lattice % for concurrency
         \end{itemize}
     \end{column}
 
+    \pause
+
     \begin{column}{0.30\textwidth}
+    \vspace{-0.2in}
     \footnotesize{
     \begin{tikzpicture}
         \node (WRA) at (0,3) {$\{W\ (R)\ (A)\}$};
@@ -1273,52 +1283,93 @@ Several of the pointer- and object-based approaches in the previous section also
         \node[draw, right= of e] {$\text{Pure}$};
       \draw (e) -- (A) -- (RA) -- (WRA);
     \end{tikzpicture}
-    % todo show example! (1 procedure, one function?)
+
+    \vspace{0.1in}
+    \pause
+    E.g.
+    \begin{itemize}
+        \item \texttt{update} is Procedure
+        \item \texttt{nth} is Observer
+        \item \texttt{arrayCreate} is Function
+        \item \texttt{length} is Pure
+    \end{itemize}
     }
     \end{column}
   \end{columns}
-    See also: MFX \footcite{lucassen_polymorphic_1988} % TODO fix
+  \vspace{-0.3in}
 \end{frame}
-
-% note{
-% mfx language, extends work using:
-%   effect classes
-%   full abstraction over effects
-%   unmaskable side-effects
-%   soundness proof
-% }
+\note[itemize]{
+% fluent
+\item observer: not cause side-effects; cannot perform assignments or call procedure
+\item function: not cause side-effcts, value is not affected by side-effects; no assignments, cannot call up, cannot access update-able variables
+\item pure: referentially transparent: does not cause side-ffects, value not affected by side-effects, returns same value each time evaluated
+\item pure:  no asignments, no accessing updating variables, cannot allocate updateable variables
+\item cannot call UP the lattice
+% MFX:
+\item show soundness of effect type system for FX language
+\item use effect information to constraint parallel evaluation of expressions
+\item effect-masking: side-effects taht cannot be observed outside of the given expression
+\item show how type and effect info can be used to implement certain kinds of side-effect analyses
+\item language extends work with:
+\item effect classes
+\item full abstraction over effects
+\item unmaskable side-effects
+\item soundness proof
+}
 
 \begin{frame}{Effects}
-    Nielson and Nielson \footcite{nielson_type_1999} extend the simply-typed lambda calculus with annotations to demonstrate various forms of analyses:
+    Type and Effect Systems \footcite{nielson_type_1999}
     \begin{itemize}[<+->]
-        \item Control-Flow Analysis: annotate function types with function names used
-        \item Binding Time Analysis: distinguish between dynamic and static data
-        \item Side Effect Analysis:
-            \begin{itemize}
-                \item Ref. variable represented by set of points where it could have been created (\alert{region})
-                \item Annotate functions with actions they take (access, assignment, creation)
-            \end{itemize}
-        \item \alert{Region} Inference: Compile-time determination of when to allocate regions, in which to allocate data
-        % TODO do they actually cite region inference done somewhere?
+        \item Extend the simply-typed lambda calculus with annotations
+        \item Various forms of analyses, incl. Side Effect Analysis and \alert{Region} Inference
     \end{itemize}
+
+    \pause
+
+%\begin{gather*}
+%    x \in \text{Variables}
+%    \quad
+%    c \in \text{Constants}
+%\end{gather*}
+
+\vspace{-0.2in}
+\begin{alignat*}{2}
+    \text{Exprs}\quad &e &&::= c \altm x \altm \texttt{fn}_{\pi}\ x\ \Rightarrow e_0 \altm e_1\ e_2 \onslide<5->{\altm \texttt{new}_{\pi}\ x\ :=\ e_1\ \texttt{in}\ e_2} \onslide<6->{\altm!x} \onslide<7->{\altm x := e_0}
+\\
+    \text{Types}\quad &\tau &&::= \texttt{int} \altm \texttt{bool} \only<4-8>{\altm \tau_1 \rightarrow \tau_2} \only<9->{\altm \tau_1 \xrightarrow[]{\phi} \tau_2} \only<8>{\altm \tau\ \texttt{ref}} \only<9->{\altm \tau\ \texttt{ref}\ \varrho}
+\onslide<10->{\\ \only<10-11>{\text{Effect}}\only<12->{\colorIt{blue}{n1}{\text{Region}}}\quad &\phi &&::= \{!\pi\} \altm \{\pi:=\} \altm \{\texttt{new}\ \pi\} \altm \phi_1 \cup \phi_2 \altm \emptyset}
+\onslide<11->{\\ \text{PrgPts}\quad &\varrho &&::= \{\pi\} \altm \varrho_1 \cup \varrho_2 \altm \emptyset}
+\end{alignat*}
+
+\onslide<13->{
+\begin{center}
+    $\Gamma \vdash e\ :\ \tau \ \&\ \phi$
+\end{center}
+}
+
+\vspace{0.1in}
 \end{frame}
+\note[itemize]{
+\item region inference: compile-time determination of when to allocate regions, in which to allocate data
+\item Ref. variable represented by set of points where it could have been created (\alert{region})
+\item Annotate functions with actions they take (access, assignment, creation)
+\item we call \pi the creation point
+\item \tau ref \varrho is type of loc created at one of the program points in region \varrho
+}
 
 % BitC \footcite{shapiro_origins_2008} % a retrospective on BitC, what they were looking for (not too interesting)
 
 \begin{frame}{Region-Based Memory Managememt}
     Regions \footcite{tofte_region-based_1997}
-    \begin{itemize}
-        \item Divide heap into sub-heaps (``regions'')
-        \item Each region is like an unbounded stack, growing upwards
-        \item \emph{Entire} region deallocated (no individual object deallocation)
-        \item Explicit region polymorphism % regions can be given as arguments to functions at runtime
-        % TODO is the novelty just the sound type system?
-        %\item Novelty: sound type system and region inference; analysis automatically identifies:
-        \item Sound type system; analysis automatically identifies:
-            %\vspace{-0.08in}
+    \begin{itemize}[<+->]
+        \item Divide heap into collection of sub-heaps (``regions'') \note{unbounded subheaps}
+        \item Grows on individual allocation; \alert{entire} region deallocated \note{no individual object deallocation}
+        \item Explicit region polymorphism \note{regions can be given as arguments to functions at runtime}
+        \item Sound type system \alert{guarantees safety} of deallocations \note{both alloc and dealloc are explicit}
+        \item Region inference identifies:
             \begin{itemize}
-                \item points where entire regions are allocated and deallocated
-                \item into which region values should go
+                \item Points where entire regions are allocated and deallocated
+                \item Into which region values should go
             \end{itemize}
         \item Used in ML Kit
         \item Unreasonable object lifetimes b/c LIFO ordering of region lifetimes %(lifetime of expression must coincide with time takes to execute some subexpression)
@@ -1333,20 +1384,20 @@ Capability Calculus \footcite{crary_typed_1999}
         \item Add aliasing info to capabilities; track copies to know when truly revoked
         \item Arbitrarily-ordered region allocation/deallocation
     \end{itemize}
-
+\pause
 RC \footcite{gay_language_2001}
     \vspace{-0.1in}
    \begin{itemize}
      \item Region-support for C, focus on preventing dangling pointers % aliasing!
      \item For each region, maintain a reference count of external pointers pointing to objects in region % deleteregion fails if count is zero
      %\item Type system + annotations ($\texttt{sameregion}, \texttt{traditional}, \texttt{parentptr}$) to help compiler remove annotation operations % no updating associated region % enforced by runtime checks
-     \item Annotations ($\texttt{sameregion}, \texttt{traditional}, \texttt{parentptr}$) to prevent updating associated region % enforced by runtime checks
+     %\item Annotations ($\texttt{sameregion}, \texttt{traditional}, \texttt{parentptr}$) to prevent updating associated region % enforced by runtime checks
      %\item Restrict C by disallowing arbitrary integer-to-pointer casts
-     \item Break cyclic data structures before deleting regions
+     %\item Break cyclic data structures before deleting regions
      \item \alert{No} memory safety guarantee
 % \item 27%-11% overhead
    \end{itemize}
-
+\pause
 Reaps \footcite{berger_reconsidering_2002}
     \vspace{-0.1in}
    \begin{itemize}
@@ -1376,9 +1427,9 @@ Reaps \footcite{berger_reconsidering_2002}
 \begin{frame}[fragile]{Regions in Cyclone}
 \footnotesize{
   \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
+    \begin{column}{0.46\textwidth}
     \begin{itemize}
-        \item Pointer can escape scope of their regions (via closures/existential types)
+        \item Pointer can escape scope of their regions \note{via closures/existential types}
         \item Type system tracks \alert{capability} (set of live regions) on pointer dereference % no closures, but existential types can hide pointers to escape scope of their regions
         \item A function's \alert{effect} is the set of regions it might access
         \item Calculate function's effect from prototype alone
@@ -1394,7 +1445,7 @@ struct Set<$\alpha$, $\rho$, $\epsilon$>
 
 \pause
 
-    \begin{column}{0.48\textwidth}
+    \begin{column}{0.52\textwidth}
         \begin{itemize}
         \item Type of elements not known, so use $\epsilon$ to abstract set of regions it might need to access
         \item Fix with static operator $\texttt{regions\_of}$ instead of effect variables % TODO review what effect variables are
@@ -1567,12 +1618,13 @@ Soundness Theorem:
     \begin{itemize}
         \item The program cannot get stuck from type errors or dangling-pointer dereferences. 
         %\item If starting statement is well-formed with respect to initial heap, the program cannot get stuck from type errors or dangling-pointer dereferences. 
-        \item If program terminates, all regions it allocated will have been freed
+        \item All allocated regions of a terminating program will be explicitly freed \note{non-vacuous -- it's saying b/c it did its job right}
     \end{itemize}
-    % TODO it says GC can be used, but why?! what is it used for (pag 289)
+    % can compile with GC
+\pause
 Benchmarks
     \begin{itemize}
-        \item Porting changes (mostly changing pointers to safe)
+        \item Porting changes (mostly changing pointers to safe) % TODO what does that mean?
         \item 124 region-related changes (6\% of total) across 18,000 lines
         \item Near-zero overhead on non-compute intensive benchmarks % TODO why
     \end{itemize}
