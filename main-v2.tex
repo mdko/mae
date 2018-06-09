@@ -186,6 +186,16 @@ Operating Systems % lowest level of abstraction
   \metroset{numbering=fraction}
 }
 
+\AtBeginSubsection[]
+{
+  \metroset{numbering=none}
+  \begin{frame}<beamer>[noframenumbering] 
+    \frametitle{Outline}   
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+  \metroset{numbering=fraction}
+}
+
 \only<handout>{
   \addtocounter{framenumber}{1}
 }
@@ -209,7 +219,8 @@ Some approaches:
 \end{frame}
 
 \begin{frame}[fragile]{Spatial Safety Example}
-\footnotesize
+\begin{columns}[T]
+\begin{column}{0.52\textwidth}
 \begin{lstlisting}[
     language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
     moredelim={**[is][{\btHL<1>}]{@1}{@}},
@@ -220,9 +231,11 @@ Some approaches:
     moredelim={**[is][{\btHL<6>}]{@6}{@}},
     moredelim={**[is][{\btHL<7>}]{@7}{@}},
 ]
-@2int find_token(int *data, int *end, int token)@
+@2int find_token(int *data,@
+@2                 int *end,@
+@2                 int token)@
 {
-    @3int i, *p = data;@
+    @3int *p = data;@
     @4while (p < end) {@
     @5    if (*p == token) break;@
     @6    p++;@
@@ -230,25 +243,30 @@ Some approaches:
     @7return (*p == token);@
 }
 \end{lstlisting}
-
+\end{column} 
+\begin{column}{0.44\textwidth}
 
 \onslide<8->
 \footnotesize{
 Potential pointer dereference problems:
-  \begin{itemize}
+  \begin{itemize}[<+->]
       \item Null
       \item Uninitialized
       \item Out-of-bounds \note{related: data might not be an array, unrelated}
       \item Manufactured \note{not shown here exactly}
   \end{itemize}
 }
+\end{column}
+\end{columns}
+
 \end{frame}
 
 \subsection{Fat Pointers and Shadow Structures}
 
 \begin{frame}{Fat Pointers}
   \footnotesize
-Fat pointers
+Fat Pointers
+\pause
 \begin{itemize}[<+->]
  \item Added information such as base and bound addresses (multiword) \note{typically info next to pointer}
  \item Instrument all pointers and functions
@@ -352,10 +370,12 @@ Fail-Safe C \footcite{oiwa_implementation_2009}:
 \begin{frame}[fragile]{Fat Pointers Preventing Spatial Errors}
     \begin{columns}[T]
       \begin{column}{0.44\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily}]
-int find_token(int *data, int *end, int token)
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+int find_token(int *data,
+               int *end,
+               int token)
 {
-    int i, *p = data;
+    int *p = data;
     while (p < end) {
 
 
@@ -375,7 +395,7 @@ int find_token(int *data, int *end, int token)
 
 \begin{column}{0.56\textwidth}
 
-\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily},
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily},
     moredelim={**[is][\btHL<3>]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
@@ -383,9 +403,11 @@ int find_token(int *data, int *end, int token)
     moredelim={**[is][{\btHL<7>}]{@7}{@}},
     moredelim={**[is][{\btHL<8>}]{@8}{@}}
 ]
-int find_token(int *@3SEQ@ data, int *@4SAFE@ end, int token)
+int find_token(int *@3SEQ@ data,
+               int *@4SAFE@ end,
+               int token)
 {
-    int i, *@5SEQ@ p = data;
+    int *@5SEQ@ p = data;
     while (p < end) {
         @6assert(p.base != 0 &&@
         @6         0 <= p.value &&@
@@ -427,20 +449,20 @@ MSCC \footcite{xu_efficient_2004}
 \end{frame}
 
 % MSCC style
-\begin{frame}[fragile]{Shadow Structures}
+\begin{frame}[fragile]{Shadow Structures Example}
 \begin{columns}
-\begin{column}{0.48\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily}]
+\begin{column}{0.42\textwidth}
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
 
 
 
 
-
-int find_token(int *data,
-               int *end,
-               int token)
+int find_token(
+  int *data,
+  int *end,
+  int token)
 {
-    int i, *p = data;
+    int *p = data;
 
     while (p < end) {
 
@@ -455,31 +477,31 @@ int find_token(int *data,
 
 \pause
 
-\begin{column}{0.48\textwidth}
+\begin{column}{0.56\textwidth}
 
-\begin{lstlisting}[language=C,mathescape,basicstyle={\tiny\ttfamily},
-    moredelim={**[is][{\btHL<2>}]{@2}{@}},
+\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily},
     moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
+    moredelim={**[is][{\btHL<6>}]{@6}{@}},
 ]
-@2struct ptr_info {@
-@2    void *base;@
-@2    unsigned long bound;@
-@2    struct ptr_info *link;@
-@2};@
-int find_token(int *data, @3ptr_info *data_info,@
-               int *end,  @3ptr_info *end_info,@
-               int token)
+@3struct ptr_info {@
+@3    void *base;@
+@3    unsigned long bound;@
+@3};@
+int find_token(
+  int *data, @4ptr_info *data_info,@
+  int *end,  @4ptr_info *end_info,@
+  int token)
 {
-    int i, *p = data;
-    @4ptr_info  p_info = *data_info;@
+    int *p = data;
+    @5ptr_info  p_info = *data_info;@
     while (p < end) {
-        @5CHECK_SPATIAL(p, sizeof(*p), p_info);@
+        @6CHECK_SPATIAL(p, sizeof(*p), p_info);@
         if (*p == token) break;
         p++;
     }
-    @5CHECK_SPATIAL(p, sizeof(*p), p_info);@
+    @6CHECK_SPATIAL(p, sizeof(*p), p_info);@
     return (*p == token);
 }
 \end{lstlisting}
@@ -501,7 +523,8 @@ Objects
     \item Associate metadata with \alert{objects} themselves, not pointers
     \item Global database relates every allocated address to corresponding object metadata \note{updating on alloc, dealloc, on function entry/exit for stack-based objects, program startup for global object}
     \item Every pointer to same object shares same metadata
-    \item Bounds check on \alert{pointer arithmetic} to ensure validity of derived poitners \note{i.e. point to same object}
+    \item Bounds check on \alert{pointer arithmetic} \note{and array indexing} to ensure validity of derived poitners \note{i.e. point to same object}
+    %\item do not check pointer derferences
 \end{itemize}
 \end{column}
 
@@ -546,12 +569,12 @@ strcpy(ptr, "overflow...");
 
 % TODO possibly "Applied to linux kernel: Criswell Secure virtual arch 2007"
 
-\begin{frame}{Object Approaches}
+\begin{frame}{Referent Objects Approaches}
 J\&K \footcite{jones_backwards_1997}
     \begin{itemize}
        %\item Maintain table of all known valid storage objects
        %\item Map a ptr to a desciptor of the object into which it points
-       \item Pad objects w/ extra byte
+       \item Pad objects w/ extra byte \todo{why}
        %\item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
        %\item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
        \item Incomplete because cannot pad parameters \note{would change layout}
@@ -565,7 +588,9 @@ CRED \footcite{ruwase_practical_2004}
       \item 2x overhead
     \end{itemize}
 \vspace{0.2in}
+\end{frame}
 
+\begin{frame}[fragile]{Referent Objects Approaches}
 SafeCode \footcite{dhurjati_2006_backwards}
     \begin{itemize}
         \item Use automatic pool allocation (APA) \footcite{lattner_automatic_2005} \note{builds on JK, APA: partitions memory based on static points-to analysis}
@@ -574,7 +599,7 @@ SafeCode \footcite{dhurjati_2006_backwards}
     \end{itemize}
 \vspace{0.2in}
 
-BBC \footcite{akritidis_baggy_2009}
+Baggy Bounds Checking (BBC) \footcite{akritidis_baggy_2009}
     \begin{itemize}
     \item Trades memory for performance \note{fastest object bounds checker}
     \item Pads every object s.t. size is power of two, aligns base addresses to be multiple of their padded size
@@ -584,50 +609,61 @@ BBC \footcite{akritidis_baggy_2009}
 \vspace{0.2in}
 % TODO read this paper more: great succinct explanation of this approach (p 2)
 
-PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead}
+%PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead}
 \end{frame}
 
-\begin{frame}{Objects for Spatial Safety}
+\begin{frame}[fragile]{Referent Objects Example}
+\footnotesize
 \begin{columns}[T]
 \begin{column}{0.45\textwidth}
-%\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\small\ttfamily}]
-%int find_token(int *data, int *end, int token)
-%{
-%    int i, *p = data;
-%    while (p < end) {
-%        if (*p == token) break;
-%        p++;
-%    }
-%    return (*p == token);
-%}
-%\end{lstlisting}
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\tiny\ttfamily}]
+int find_token(int *data, int *end, int token)
+{
+    int *p = data;
+    while (p < end) {
+        if (*p == token) break;
+
+
+
+
+        p++;
+    }
+    return (*p == token);
+}
+\end{lstlisting}
 \end{column}
 
+\pause
+
 \begin{column}{0.45\textwidth}
-%\begin{lstlisting}[
-%    language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
-%    moredelim={**[is][{\btHL<1>}]{@1}{@}},
-%    moredelim={**[is][{\btHL<2>}]{@2}{@}},
-%    moredelim={**[is][{\btHL<3>}]{@3}{@}},
-%    moredelim={**[is][{\btHL<4>}]{@4}{@}},
-%    moredelim={**[is][{\btHL<5>}]{@5}{@}},
-%    moredelim={**[is][{\btHL<6>}]{@6}{@}},
-%    moredelim={**[is][{\btHL<7>}]{@7}{@}},
-%]
-%@2int find_token(int *data, int *end, int token)@
-%{
-%    @3int i, *p = data;@
-%    @4while (p < end) {@
-%    @5    if (*p == token) break;@
-%    @6    p++;@
-%    }
-%    @7return (*p == token);@
-%}
-%\end{lstlisting}
+\begin{lstlisting}[
+    language=C,numbers=left,mathescape,basicstyle={\tiny\ttfamily},
+    moredelim={**[is][{\btHL<3>}]{@3}{@}},
+    moredelim={**[is][{\btHL<4>}]{@4}{@}},
+    moredelim={**[is][{\btHL<5>}]{@5}{@}},
+    moredelim={**[is][{\btHL<6>}]{@6}{@}},
+]
+int find_token(int *data, int *end, int token)
+{
+    int *p = data;
+    while (p < end) {
+        if (*p == token) break;
+        @3int *q = p + 1;@
+        @4int size = 1 << TABLE[p>>SLOT_SIZE];@
+        @5int base = p & ~(size - 1);@
+        @6assert(q >= base && q - base < size);@
+        p++;
+    }
+    return (*p == token);
+}
+\end{lstlisting}
+%Lines 4-6 are equivalent to $\texttt{assert((p^q)>>TABLE[p>>SLOT_SIZE] == 0)}$.
 \end{column}
 
 \end{columns}
 \end{frame}
+
+% TODO add diagram of memory layout and how this ptr arith works!!!
 
 % Mudflap: Eigler 2003
 % Criswell: Secure Virt Arch 2007
@@ -651,20 +687,12 @@ PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead
 \footnotesize
 Softbound \footcite{nagarakatte_softbound:_2009}
     \begin{itemize}
-        \item Metadata for each pointer, stored in global lookup table \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
+        \item Base and bound metadata for each pointer, stored in disjoint metadata space (via table lookups) \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
+        \item Total spatial safety of pointer-based approaches \note{eliminate sub-object problem}
+        \item Source compatibility, separate compilation of object-based approaches
         \item Runtime bounds checks on each dereference
         \item Propagate metadata as extra arguments \note{to function calls, wrappers for commonly-used libraries, must transform every func decl/call-site, or shadow stack (nagarakatte thesis)}
-        \item Advantages:
-            \begin{itemize}
-                \item No sub-object overflow problem \note{not handled in MSCC}
-                \item Arbitrary casts allowed \note{just check ptr involved in casts on derfernce w.r.t to its metadata}
-                \item Complete spatial safety
-                \item Separate compilation
-            \end{itemize}
-        \item Disadvantages:
-            \begin{itemize}
-                \item Foo
-            \end{itemize}
+        \item Arbitrary casts allowed \note{just check ptr involved in casts on derfernce w.r.t to its metadata, no way to overwrite metadata}
         \item 67\% overhead
 %        \item Must protect every module for *complete* safety (untrusted module can modify ptr, table is out-of-sync)
 %        \item Only store metadata in disjoint space for pointers in memory, perform metadata loads/stores only when loaded/stored value from/into memory loc is a ptr
@@ -672,6 +700,10 @@ Softbound \footcite{nagarakatte_softbound:_2009}
     \end{itemize}
 \end{frame}
 % TODO lookup how 'lookup works'
+
+\begin{frame}{Softbound Example}
+    \todo{possibly}
+\end{frame}
 
 % TODO update running example, or add in softbounds pictures! (or reserve for CETS)
 %\begin{frame}[fragile]{Separate Metadata}
@@ -694,26 +726,26 @@ Softbound \footcite{nagarakatte_softbound:_2009}
 %  \end{lstlisting}
 %\end{frame}
 
-\begin{frame}{Hardware Approaches to Spatial Safety}<presentation:0>
-    \begin{itemize}
-       \item Hardbound: Devietti 2008
-       \item Intel MPX %: \verbatim{https://gcc.gnu.org/wiki/Intel%20MPX%20support%20in%20the%20GCC%20compiler}
-       \item Watchdog: Nagarakatte 2012
-       \item (Hybrid): WatchdogLite
-    \end{itemize}
-\end{frame}
+%\begin{frame}{Hardware Approaches to Spatial Safety}<presentation:0>
+%    \begin{itemize}
+%       \item Hardbound: Devietti 2008
+%       \item Intel MPX %: \verbatim{https://gcc.gnu.org/wiki/Intel%20MPX%20support%20in%20the%20GCC%20compiler}
+%       \item Watchdog: Nagarakatte 2012
+%       \item (Hybrid): WatchdogLite
+%    \end{itemize}
+%\end{frame}
 
-\begin{frame}{Other Spatial Approaches}<presentation:0>
-\begin{itemize}
- \item (Also: tripwire approaches, mostly for testing): TODO need to have reason why I'm skipping
- \item Hastings Purify 1992 (reveal during testing), object based, has temporal safety
- \item Nethercote Valgrind 2007 (reveal during testing)
- \item Qin SafeMem 2005
- \item Venkataramani Memtracker 2007
- \item Yong "Protecting C" 2003
- \item Serebryany AddressSanitizer 2012: object-based, has temporal safety
-\end{itemize}
-\end{frame}
+%\begin{frame}{Other Spatial Approaches}<presentation:0>
+%\begin{itemize}
+% \item (Also: tripwire approaches, mostly for testing): TODO need to have reason why I'm skipping
+% \item Hastings Purify 1992 (reveal during testing), object based, has temporal safety
+% \item Nethercote Valgrind 2007 (reveal during testing)
+% \item Qin SafeMem 2005
+% \item Venkataramani Memtracker 2007
+% \item Yong "Protecting C" 2003
+% \item Serebryany AddressSanitizer 2012: object-based, has temporal safety
+%\end{itemize}
+%\end{frame}
 
 % TODO describe why not mentioning ETC/LCLint/CSSV/Abcd are static analyzers, not built-in lang techniques
 \subsection{Dependent Types}
@@ -726,6 +758,7 @@ Softbound \footcite{nagarakatte_softbound:_2009}
         \item Combine as well: $\texttt{cons : }\Pi\texttt{n:Nat.data}\rightarrow\texttt{Vector n}\rightarrow\texttt{Vector(n+1)}$.
         %\item Generalizes arrow type % TODO Do i need this?
         \item Based on type theory work by Martin-L\:of \footcite{martin-lof_constructive_1984}
+        \item \todo{Explain inherent undecidability}
     \end{itemize}
 \end{frame}
 
@@ -755,23 +788,109 @@ $\text{Xanadu}_{0}^{\Pi,\Sigma}$ (C-like) \footcite{xi_imperative_2000}
 % \item Allows trusted cast mechanism to supress errors
 
 \begin{frame}{Dependent Types in Imperative Languages}
-SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_2007}
+SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_2007}, \footcite{anderson_static_2007}
 \vspace{-0.1in}
     \begin{itemize}
         \item User-added annotations relating pointers to bounds
-        \item Expressions in types limited to local variables, constants, and arithmetic expr
+            \begin{itemize}
+                \item \texttt{safe}, \texttt{sentinel}, \texttt{count(n)}, \texttt{bound(lo,hi)}
+                \item \texttt{n, lo, hi} expressions refer to constants and variables/field names in immediately enclosing scope
+            \end{itemize}
+        %\item allow programmers to specify common c programming idioms involving ptr arith and union types
+        %\item compiler checks safety of most pointer and union operations
         \item Three-phase pass over annotated C programs, emits C code
             \begin{enumerate}
-                \item Automatic bound variables addition
-                \item Flow-insensitive type checking (insert run-time checks)
+                \item Automatic addition of bounds annotations for pointer types \note{fresh local var to hold bounds}
+                \item Flow-insensitive type checking (insert run-time checks, helps decidability) \note {hybrid means SA for type determination, run-time checks when SA precision is too low}
                 \item Flow-sensitive check optimization
             \end{enumerate}
     \end{itemize}
-\vspace{-0.3in}
+\end{frame}
+
+\note[itemize]{
+  \item safe = ptr is null/pts to single element of base type
+  \item sentintel = only for comparisons
+  \item count(n) = null or point to an array of at least nelements of base type
+  \item bounds(lo,hi) = null or point into mem region w/ low address lo, hi is first element beyond region end
+  \item: invariant is that ptrs null, or within stated bounds
+}
+% TODO: are the assertions to make it safe (catch bad things), or an assertion something that is known to be true
+
+% go through an example to get a feeling, then after explaining judgments, explain it again stepping through the judgments
+\begin{frame}[fragile]{Deputy Example for Spatial Safety}
+\begin{columns}[T]
+\begin{column}{0.40\textwidth}
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily}]
+int find_token(int *data,
+               int *end,
+               int token)
+{
+
+
+    int *p = data;
+    while (p < end) {
+
+
+
+        if (*p == token) break;
+
+        p++;
+    }
+
+
+    return (*p == token);
+}
+\end{lstlisting}
+\end{column}
+
+%\scriptsize{$\colorbox{blue!30}{Code added during automatic dependency inference}$}
+
+\pause
+
+\begin{column}{0.58\textwidth}
+\begin{lstlisting}[
+    language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
+    moredelim={**[is][{\btHL[onslide=<3->{fill=blue!50}]}]{@3}{@}},
+    moredelim={**[is][{\btHL[onslide=<4->{fill=blue!50}]}]{@4}{@}},
+    moredelim={**[is][{\btHL[onslide=<5->{fill=blue!50}]}]{@5}{@}},
+    moredelim={**[is][{\btHL[onslide=<6->{fill=red!50}]}]{@6}{@}},
+    moredelim={**[is][{\btHL[onslide=<7->{fill=red!50}]}]{@7}{@}},
+    moredelim={**[is][{\btHL[onslide=<8->{fill=red!50}]}]{@8}{@}},
+    moredelim={**[is][{\btHL[onslide=<9->{fill=red!50}]}]{@9}{@}},
+]
+int find_token(int * @3bound(cur, end)@ data,
+               int * @4sentinel@ end,
+               int token)
+{
+    @6assert(data != NULL);@
+    @6assert(end != NULL);@
+    int *p @5bound(cur, end)@ = data;
+    while (p < end) {
+        @7assert(p != NULL);@
+        @7assert(p < end);@
+        if (*p == token) break;
+        @8assert(p <= p + 1 <= end);@
+        p++;
+    }
+    @9assert(p != NULL);@
+    @9assert(p < end);@
+    return (*p == token);
+}
+\end{lstlisting}
+\end{column}
+\note[itemize]{
+\item Let's assume that the code is fully annotated (automatic generation coming later)
+\item No arithmetic/comparisons on null ptrs
+\item 8 assert: legal to point past end
+\item 9 illegal to access
+}
+
+\end{columns}
+\end{frame}
 
 % here I need to exaplin what a grammer is for them
 % TODO make an animation with colors describing things I talk about as I do
-\footnotesize{
+\begin{frame}{Abstract Syntax, For Your Consideration}
 \begin{gather*}
     x,y \in \text{Variables}
     \quad
@@ -782,7 +901,7 @@ SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_
     \text{comp} \in \text{Comparison Ops}
 \end{gather*}
 
-\vspace{-0.3in}
+\vspace{0.2in}
 
 \begin{columns}[T]
 \begin{column}{0.45\textwidth}
@@ -809,11 +928,10 @@ SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_
 \end{alignat*}
 \end{column}
 \end{columns}
-}
 
 \vspace{0.1in}
-
 \end{frame}
+
 %\note{
 % kind of int is "type"
 % kind of ref is "type -> type"
@@ -824,6 +942,8 @@ SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_
 
 \begin{frame}{Deputy}
 Judgments for checking the well-formedness of types, local expressions, predicated expressions, and commands (which rewrite)
+\note{local expression: expressions formed using constants, local variables, arbitrary arithmetic operators (no memory deferences}
+\note{expressions in types are restricted to local expressions}
 % TODO color these based on the type of judgement (in line above this one and in judgment name)
 % TODO make an animation
 
@@ -886,48 +1006,52 @@ Support in C
     \vspace{0.2in}
 \end{frame}
 
-\begin{frame}[fragile]{Deputy}
+\begin{frame}[fragile]{Deputy Example for Spatial Safety}
 \begin{columns}[T]
 \begin{column}{0.48\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
-int sum(int *$\colorbox{green!30}{count(end - buf)}$ buf,
-        int *end)
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\small\ttfamily}]
+int find_token(int *data, int *end, int token)
 {
-    int sum = 0;
-    while(buf < end) {
-        sum += *buf;
-        int *tmp = buf + 1;
-        buf = tmp;
+    int i, *p = data;
+    while (p < end) {
+        if (*p == token) break;
+        p++;
     }
-    return sum;
+    return (*p == token);
 }
 \end{lstlisting}
-    \scriptsize{$\colorbox{green!30}{Programmer-supplied annotation}$}
-    \\
-    \scriptsize{$\colorbox{blue!30}{Code added during automatic dependency inference}$}
-    \\
-    \scriptsize{$\colorbox{red!30}{Assertions added during checking}$}
 \end{column}
 
+%int sum(int *$\colorbox{green!30}{count(end - buf)}$ buf,
+%\scriptsize{$\colorbox{green!30}{Programmer-supplied annotation}$}
+%\scriptsize{$\colorbox{blue!30}{Code added during automatic dependency inference}$}
+%\scriptsize{$\colorbox{red!30}{Assertions added during checking}$}
+
 \begin{column}{0.48\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
-int sum(int *$\colorbox{green!30}{count(end - buf)}$ buf,
-        int *end)
+\begin{lstlisting}[
+    language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
+    moredelim={**[is][{\btHL<1>}]{@1}{@}},
+    moredelim={**[is][{\btHL<2>}]{@2}{@}},
+    moredelim={**[is][{\btHL<3>}]{@3}{@}},
+    moredelim={**[is][{\btHL<4>}]{@4}{@}},
+    moredelim={**[is][{\btHL<5>}]{@5}{@}},
+    moredelim={**[is][{\btHL<6>}]{@6}{@}},
+    moredelim={**[is][{\btHL<7>}]{@7}{@}},
+]
+@2int find_token(int *data,@
+@2                 int *end,@
+@2                 int token)@
 {
-    int sum = 0;
-    while(buf < end) {
-        $\colorbox{red!30}{assert(0 < end - buf);}$
-        sum += *buf;
-        $\colorbox{blue!30}{int tmplen = (end - buf) - 1;}$
-        $\colorbox{red!30}{assert(0 <= 1 <= end - buf);}$
-        int * $\colorbox{blue!30}{count(tmplen)}$ tmp = buf + 1;
-        $\colorbox{red!30}{(0 <= end - tmp <= tmplen);}$
-        buf = tmp;
+    @3int i, *p = data;@
+    @4while (p < end) {@
+    @5    if (*p == token) break;@
+    @6    p++;@
     }
-    return sum;
+    @7return (*p == token);@
 }
 \end{lstlisting}
 \end{column}
+
 \end{columns}
 \end{frame}
 % All checks here would be eliminated.
