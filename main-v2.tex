@@ -232,8 +232,8 @@ Some approaches:
     moredelim={**[is][{\btHL<7>}]{@7}{@}},
 ]
 @2int find_token(int *data,@
-@2                 int *end,@
-@2                 int token)@
+@2               int *end,@
+@2               int token)@
 {
     @3int *p = data;@
     @4while (p < end) {@
@@ -319,7 +319,8 @@ SafeC \footcite{austin_efficient_1994}:
 Cyclone \footcite{jim_cyclone:_2002}: \note{offshoot of TAL/popcorn}
 \begin{itemize}
     \item Annotations for array/non-array pointers (never-null, fat, unitialized warning via control-flow analysis) % TODO look up again, split this
-    \item Tagged unions and automatic tag injection (e.g. $\texttt{printf}$)
+    \item Tagged unions and automatic tag injection (e.g. $\texttt{printf}$) %TODO remove or explain
+    \item Can specify number of elements pointer points to \note{deputy is more general}
     %\item Arrays and strings converted automatically to fat
     % TODO determine if these are important
     %\item Statically validate and remove non-array fat pointers
@@ -370,7 +371,7 @@ Fail-Safe C \footcite{oiwa_implementation_2009}:
 \begin{frame}[fragile]{Fat Pointers Preventing Spatial Errors}
     \begin{columns}[T]
       \begin{column}{0.44\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily}]
 int find_token(int *data,
                int *end,
                int token)
@@ -395,7 +396,7 @@ int find_token(int *data,
 
 \begin{column}{0.56\textwidth}
 
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily},
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
     moredelim={**[is][\btHL<3>]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
@@ -452,7 +453,7 @@ MSCC \footcite{xu_efficient_2004}
 \begin{frame}[fragile]{Shadow Structures Example}
 \begin{columns}
 \begin{column}{0.42\textwidth}
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily}]
 
 
 
@@ -479,7 +480,7 @@ int find_token(
 
 \begin{column}{0.56\textwidth}
 
-\begin{lstlisting}[language=C,mathescape,basicstyle={\scriptsize\ttfamily},
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
     moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
@@ -615,9 +616,11 @@ Baggy Bounds Checking (BBC) \footcite{akritidis_baggy_2009}
 \begin{frame}[fragile]{Referent Objects Example}
 \footnotesize
 \begin{columns}[T]
-\begin{column}{0.45\textwidth}
-\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\tiny\ttfamily}]
-int find_token(int *data, int *end, int token)
+\begin{column}{0.42\textwidth}
+\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily}]
+int find_token(int *data,
+               int *end,
+               int token)
 {
     int *p = data;
     while (p < end) {
@@ -635,15 +638,17 @@ int find_token(int *data, int *end, int token)
 
 \pause
 
-\begin{column}{0.45\textwidth}
+\begin{column}{0.56\textwidth}
 \begin{lstlisting}[
-    language=C,numbers=left,mathescape,basicstyle={\tiny\ttfamily},
+    language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
     moredelim={**[is][{\btHL<3>}]{@3}{@}},
     moredelim={**[is][{\btHL<4>}]{@4}{@}},
     moredelim={**[is][{\btHL<5>}]{@5}{@}},
     moredelim={**[is][{\btHL<6>}]{@6}{@}},
 ]
-int find_token(int *data, int *end, int token)
+int find_token(int *data,
+               int *end,
+               int token)
 {
     int *p = data;
     while (p < end) {
@@ -686,7 +691,7 @@ int find_token(int *data, int *end, int token)
 \begin{frame}{Softbound}
 \footnotesize
 Softbound \footcite{nagarakatte_softbound:_2009}
-    \begin{itemize}
+    \begin{itemize}[<+->]
         \item Base and bound metadata for each pointer, stored in disjoint metadata space (via table lookups) \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
         \item Total spatial safety of pointer-based approaches \note{eliminate sub-object problem}
         \item Source compatibility, separate compilation of object-based approaches
@@ -706,25 +711,6 @@ Softbound \footcite{nagarakatte_softbound:_2009}
 \end{frame}
 
 % TODO update running example, or add in softbounds pictures! (or reserve for CETS)
-%\begin{frame}[fragile]{Separate Metadata}
-%  \footnotesize
-%  \begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\footnotesize\ttfamily}]
-%int sum(int *buf, int *end) {
-%    int sum = 0;
-%    $\colorbox{red!30}{int bufbase = table\_lookup(buf)->base;}$
-%    $\colorbox{red!30}{int bufbound = table\_lookup(buf)->bound;}$
-%    while(buf < end) {
-%        $\colorbox{red!30}{if ((buf < bufbase) || ((buf + sizeof(buf)) > bufbound)) abort;}$
-%        sum += *buf;
-%        int *tmp = buf + 1;
-%        $\colorbox{red!30}{int tmpbase = bufbase; int tmpbound = bufbound;}$ // inherit base and bound
-%        $\colorbox{red!30}{int bufbase = tmpbase; int bufbound = tmpbound;}$ // would be optimized out
-%        buf = tmp;
-%    }
-%    return sum;
-%}
-%  \end{lstlisting}
-%\end{frame}
 
 %\begin{frame}{Hardware Approaches to Spatial Safety}<presentation:0>
 %    \begin{itemize}
@@ -748,6 +734,7 @@ Softbound \footcite{nagarakatte_softbound:_2009}
 %\end{frame}
 
 % TODO describe why not mentioning ETC/LCLint/CSSV/Abcd are static analyzers, not built-in lang techniques
+
 \subsection{Dependent Types}
 
 \begin{frame}{Dependent Types}
@@ -764,10 +751,11 @@ Softbound \footcite{nagarakatte_softbound:_2009}
 
 \begin{frame}{Dependent Types in Functional Languages}
 \vspace{-0.08in}
-Dependent ML \footcite{xi_eliminating_1998}
+Dependent ML (DML) \footcite{xi_eliminating_1998}
 \begin{itemize}
     \item Reduce static array bound checking to constraint satisfiability
-    \item Limit indices to linear integer and boolean expressions; compile-time decidable
+    \item Indexed types: limit indices to linear integer and boolean expressions; compile-time decidable \note{decidable logic}
+    \item User provides types of recursive procedures and inductive datatypes
 \end{itemize}
 Cayenne (Haskell-like) \footcite{augustsson_cayennelanguage_1998}
 \begin{itemize}
@@ -780,21 +768,25 @@ $\text{Xanadu}_{0}^{\Pi,\Sigma}$ (C-like) \footcite{xi_imperative_2000}
 \begin{itemize}
     \item Like DML, restrict index expressions in types to integer constraint domain
 %    \item Defines what it means for a type to equal/coerce into another
-    \item Programmer must supply state type in order to type conditionals and loops
+    \item Programmer must supply state type in order to type conditionals and loops \todo{remove?}
 \end{itemize}
     \vspace{0.2in}
 \end{frame}
+\note[itemize] {
+\item the goal here is just to show that FuncLangs did it first, but they aren't always practical b/c of undecidability, difficult to use
+\item infuttered form, you get CoC
+}
 
 % \item Allows trusted cast mechanism to supress errors
 
 \begin{frame}{Dependent Types in Imperative Languages}
 SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_2007}, \footcite{anderson_static_2007}
 \vspace{-0.1in}
-    \begin{itemize}
+    \begin{itemize}[<+->]
         \item User-added annotations relating pointers to bounds
             \begin{itemize}
                 \item \texttt{safe}, \texttt{sentinel}, \texttt{count(n)}, \texttt{bound(lo,hi)}
-                \item \texttt{n, lo, hi} expressions refer to constants and variables/field names in immediately enclosing scope
+                \item Use constants/variables/field names in immediately enclosing scope \note{n, lo, hi are expressions}
             \end{itemize}
         %\item allow programmers to specify common c programming idioms involving ptr arith and union types
         %\item compiler checks safety of most pointer and union operations
@@ -804,17 +796,36 @@ SafeDrive \footcite{zhou_safedrive:_2006} and Deputy \footcite{condit_dependent_
                 \item Flow-insensitive type checking (insert run-time checks, helps decidability) \note {hybrid means SA for type determination, run-time checks when SA precision is too low}
                 \item Flow-sensitive check optimization
             \end{enumerate}
+        \item More C Support: mutable structures, dependent union tags \note{c idiom: tag indicates union field in use}, Safe TinyOS \footcite{hill_system_2000}, \footcite{gay_nesc_2003}, \footcite{cooprider_efficient_2007}
     \end{itemize}
+    \vspace{0.2in}
 \end{frame}
 
 \note[itemize]{
+% they're really *hybrid* approach: try your best, then offer runtime checks
+% TODO maybe include this info (next few items)
+  \item track info required to place run-time checks (asserts) in program
+  \item  flow- path-insensitive, bolvious to aliasing, heap updates, data structures
+  \item local type inference
+  \item static verifier discharges checks at compile-time
+% about annotations
   \item safe = ptr is null/pts to single element of base type
   \item sentintel = only for comparisons
   \item count(n) = null or point to an array of at least nelements of base type
   \item bounds(lo,hi) = null or point into mem region w/ low address lo, hi is first element beyond region end
   \item: invariant is that ptrs null, or within stated bounds
-}
+% dependent union tags
+  \item c idiom: tag indicates union field in use
+  \item Specify the condition for each union field to be usable
+  \item \emph{$\text{union}_n\ \tau_1\ ...\ \tau_n\ e_1\ ...\ e_n$}
+  \item $x:\text{struct }\{ tag:\text{int}\;\ u: \text{union}_2 \text{ int (ref int)} \ (\textit{tag} \geq 2)\ (\textit{tag} = 1) \}$
+% generalized ptr
+  \item Generalize array constructor to possibly-null bounded pointer
+  \item C-style pointer arithmetic via $\oplus$ operator % TODO why use that special symbol?
+  \item $x:\text{ptr int } x\ (x \oplus n)$ $\texttt{// n integer area starting at x}$
+  \item $x:\text{ptr int } x\ e\ \ \ \ \ \ \ \ $ $\texttt{// from x to e}$
 % TODO: are the assertions to make it safe (catch bad things), or an assertion something that is known to be true
+}
 
 % go through an example to get a feeling, then after explaining judgments, explain it again stepping through the judgments
 \begin{frame}[fragile]{Deputy Example for Spatial Safety}
@@ -829,7 +840,6 @@ int find_token(int *data,
 
     int *p = data;
     while (p < end) {
-
 
 
         if (*p == token) break;
@@ -887,9 +897,9 @@ int find_token(int * @3bound(cur, end)@ data,
 
 \end{columns}
 \end{frame}
+% \note{All checks here would be eliminated}
 
-% here I need to exaplin what a grammer is for them
-% TODO make an animation with colors describing things I talk about as I do
+% \note{here I need to exaplin what a grammer is for them}
 \begin{frame}{Abstract Syntax, For Your Consideration}
 \begin{gather*}
     x,y \in \text{Variables}
@@ -908,7 +918,7 @@ int find_token(int * @3bound(cur, end)@ data,
 \begin{alignat*}{2}
 \text{Ctors}\quad &C &&::= \text{int} \altm \text{ref} \altm ...
 \\
-\text{Types}\quad &\tau &&::= C \altm \tau_1 \ \tau_2 \altm \tau\ e
+\text{Types}\quad &\tau &&::= C \altm \tau_1 \ \tau_2 \altm \colorIt{blue}{n1}{\tau\ e}
 \\
 \text{Kinds}\quad & \kappa &&::= \text{type} \altm \text{type} \rightarrow \kappa \altm \tau \rightarrow \kappa
 \\
@@ -920,11 +930,11 @@ int find_token(int * @3bound(cur, end)@ data,
 \begin{alignat*}{2}
 \textit{Exprs}\quad &e &&::= n \altm l \altm e_1 \text{ op } e_2
 \\
-\textit{Cmds}\quad &c &&::= \text{skip} \altm c_1;c_2 \altm l := e \altm \text{assert}(\gamma) \altm
+\textit{Cmds}\quad &c &&::= \text{skip} \altm c_1;c_2 \altm l := e \altm \colorIt{red}{n2}{\text{assert}(\gamma)} \altm
 \\
 ~ & ~ && \text{let } x : \tau = e \text { in } c \altm \text{let } x = \text{new } \tau(e) \text{ in } c
 \\
-\text{Preds}\quad &\gamma &&::= e_1 \text{ comp } e_2 \altm \text{true} \altm \gamma_1 \wedge \gamma_2
+\colorIt{green}{n3}{\text{Preds}} \quad &\gamma &&::= e_1 \text{ comp } e_2 \altm \text{true} \altm \gamma_1 \wedge \gamma_2
 \end{alignat*}
 \end{column}
 \end{columns}
@@ -932,16 +942,19 @@ int find_token(int * @3bound(cur, end)@ data,
 \vspace{0.1in}
 \end{frame}
 
-%\note{
-% kind of int is "type"
-% kind of ref is "type -> type"
-% loops, conditionals omitted for flow-insenstivei type system
-% Types restricted to only contain expressions using constatns, local variables, arbitrary arithmetic operators
-% Type environment is a predicate on the state of the program
-%}
+%\scriptsize{$\colorbox{green!30}{Programmer-supplied annotation}$}
 
-\begin{frame}{Deputy}
-Judgments for checking the well-formedness of types, local expressions, predicated expressions, and commands (which rewrite)
+\note[itemize]{
+\item kind of int is "type"
+\item kind of ref is "type -> type"
+\item loops, conditionals omitted for flow-insenstivei type system
+\item Types restricted to only contain expressions using constatns, local variables, arbitrary arithmetic operators
+\item Type environment is a predicate on the state of the program
+}
+
+% todo add some color, at least to one or two judgments for explanation
+\begin{frame}{Typing Rules, For Your Consideration}
+Deputy judgments and type checking rules:
 \note{local expression: expressions formed using constants, local variables, arbitrary arithmetic operators (no memory deferences}
 \note{expressions in types are restricted to local expressions}
 % TODO color these based on the type of judgement (in line above this one and in judgment name)
@@ -949,6 +962,33 @@ Judgments for checking the well-formedness of types, local expressions, predicat
 
 \pause
 
+Local Expressions
+\begin{center}
+\begin{tabular}{cc}
+\infer[(\textsc{local\ name})]
+{\Gamma \vdash_{L} x : \tau }
+{\Gamma(x) = \tau}
+    &
+\infer[(\textsc{local\ num})]
+{\Gamma \vdash_{L} n : int }
+    {}
+\end{tabular}
+\end{center}
+
+\pause
+
+Non-local Expressions
+\begin{center}
+\begin{tabular}{c}
+\infer[(\textsc{deref})]
+{\Gamma \vdash *e : \tau \Rightarrow \gamma}
+{\Gamma \vdash e: \text{ref } \tau \Rightarrow \gamma}
+\end{tabular}
+\end{center}
+
+\pause
+
+Commands
 \begin{center}
 \begin{tabular}{c}
 \infer[(\textsc{var\ write})]
@@ -956,19 +996,26 @@ Judgments for checking the well-formedness of types, local expressions, predicat
 {x \in \text{Dom}(\Gamma) \qquad
  \text{for\ all}(y:\tau_y) \in \Gamma,\ \Gamma \vdash y[e/x]:\tau_y[e/x] \Rightarrow \gamma_y }
 \end{tabular}
+\end{center}
 
-\vspace{0.1in}
 \pause
+\end{frame}
 
+\begin{frame}{The Interesting Rules}
+Dereferencing
+\begin{center}
 \begin{tabular}{c}
 \infer[(\textsc{array\ deref})]
 {\Gamma \vdash *e; \tau \Rightarrow \gamma_e \wedge (0 < e_{len})}
 {\Gamma \vdash e: \text{array } \tau \ e_{len} \Rightarrow \gamma_e}
 \end{tabular}
+\end{center}
 
 \vspace{0.1in}
 \pause
 
+Arithmetic
+\begin{center}
 \begin{tabular}{c}
 \infer[(\textsc{array\ arith})]
 {\Gamma \vdash e + e': \text{array } \tau\ (e_{len} - e') \Rightarrow \gamma_e \wedge \gamma_e' \wedge (0 \leq e' \leq e_{len})}
@@ -977,92 +1024,67 @@ Judgments for checking the well-formedness of types, local expressions, predicat
 \end{tabular} 
 \end{center}
 
-During phase 3, it uses \todo{insert name here} to check the assertions % and describe
-
 \end{frame}
 % var-write is a key contribution of type system
 % $\textsc{var\ write}$ rule responsible for updates to variables in presence of dependent type variables, verifying assignment does not break any dependencies in current scope
 % For example, we can add rules for arrays:
 % also permits a coercion judgement for allowing an array to be used where a smaller one is expected
+% todo how are constraints solved during phase 3?
 
-\begin{frame}{Deputy}
-Support in C
-    \begin{itemize}
-        \item Generalize array constructor to possibly-null bounded pointer: \emph{$\text{ptr }\tau \ lo\ hi$}
-            \begin{itemize}
-                \item C-style pointer arithmetic via $\oplus$ operator % TODO why use that special symbol?
-                \item $x:\text{ptr int } x\ (x \oplus n)$ $\texttt{// n integer area starting at x}$
-                \item $x:\text{ptr int } x\ e\ \ \ \ \ \ \ \ $ $\texttt{// from x to e}$
-            \end{itemize}
-        \item Dependent union tags
-            \begin{itemize}
-                \item Leverage C idiom: ``tag'' indicates union field in use
-                \item Specify the condition for each union field to be usable
-                \item \emph{$\text{union}_n\ \tau_1\ ...\ \tau_n\ e_1\ ...\ e_n$}
-                \item $x:\text{struct }\{ tag:\text{int}\;\ u: \text{union}_2 \text{ int (ref int)} \ (\textit{tag} \geq 2)\ (\textit{tag} = 1) \}$
-            \end{itemize}
-        \item Also used in Safe TinyOS \footcite{hill_system_2000}, \footcite{gay_nesc_2003}, \footcite{cooprider_efficient_2007}
-    \end{itemize}
-    \vspace{0.2in}
-\end{frame}
+% todo if time
+%\begin{frame}[fragile]{Revisiting that Deputy Example}
+%\begin{columns}[T]
+%\begin{column}{0.45\textwidth}
+%\begin{lstlisting}[
+%    language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
+%    moredelim={**[is][{\btHL[onslide=<3->{fill=blue!50}]}]{@3}{@}},
+%    moredelim={**[is][{\btHL[onslide=<4->{fill=blue!50}]}]{@4}{@}},
+%    moredelim={**[is][{\btHL[onslide=<5->{fill=blue!50}]}]{@5}{@}},
+%    moredelim={**[is][{\btHL[onslide=<6->{fill=red!50}]}]{@6}{@}},
+%    moredelim={**[is][{\btHL[onslide=<7->{fill=red!50}]}]{@7}{@}},
+%    moredelim={**[is][{\btHL[onslide=<8->{fill=red!50}]}]{@8}{@}},
+%    moredelim={**[is][{\btHL[onslide=<9->{fill=red!50}]}]{@9}{@}},
+%]
+%int find_token(int * @3bound(cur, end)@ data,
+%               int * @4sentinel@ end,
+%               int token)
+%{
+%    @6assert(data != NULL);@
+%    @6assert(end != NULL);@
+%    int *p @5bound(cur, end)@ = data;
+%    while (p < end) {
+%        @7assert(p != NULL);@
+%        @7assert(p < end);@
+%        if (*p == token) break;
+%        @8assert(p <= p + 1 <= end);@
+%        p++;
+%    }
+%    @9assert(p != NULL);@
+%    @9assert(p < end);@
+%    return (*p == token);
+%}
+%\end{lstlisting}
+%\end{column}
+%
+%\pause
+%
+%\begin{column}{0.45\textwidth}
+%    \todo{add explanation of use of rules}
+%\end{column}
+%
+%\end{columns}
+%\end{frame}
 
-\begin{frame}[fragile]{Deputy Example for Spatial Safety}
-\begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\begin{lstlisting}[language=C,numbers=left,mathescape,basicstyle={\small\ttfamily}]
-int find_token(int *data, int *end, int token)
-{
-    int i, *p = data;
-    while (p < end) {
-        if (*p == token) break;
-        p++;
-    }
-    return (*p == token);
-}
-\end{lstlisting}
-\end{column}
 
-%int sum(int *$\colorbox{green!30}{count(end - buf)}$ buf,
-%\scriptsize{$\colorbox{green!30}{Programmer-supplied annotation}$}
-%\scriptsize{$\colorbox{blue!30}{Code added during automatic dependency inference}$}
-%\scriptsize{$\colorbox{red!30}{Assertions added during checking}$}
-
-\begin{column}{0.48\textwidth}
-\begin{lstlisting}[
-    language=C,numbers=left,mathescape,basicstyle={\small\ttfamily},
-    moredelim={**[is][{\btHL<1>}]{@1}{@}},
-    moredelim={**[is][{\btHL<2>}]{@2}{@}},
-    moredelim={**[is][{\btHL<3>}]{@3}{@}},
-    moredelim={**[is][{\btHL<4>}]{@4}{@}},
-    moredelim={**[is][{\btHL<5>}]{@5}{@}},
-    moredelim={**[is][{\btHL<6>}]{@6}{@}},
-    moredelim={**[is][{\btHL<7>}]{@7}{@}},
-]
-@2int find_token(int *data,@
-@2                 int *end,@
-@2                 int token)@
-{
-    @3int i, *p = data;@
-    @4while (p < end) {@
-    @5    if (*p == token) break;@
-    @6    p++;@
-    }
-    @7return (*p == token);@
-}
-\end{lstlisting}
-\end{column}
-
-\end{columns}
-\end{frame}
-% All checks here would be eliminated.
-
+% TODO possibly reduce, mention in passing
 \begin{frame}{Dependent Types in Imperative Languages}
 % TODO revisit Low-Level Liquid Types, understand better!
-Low-Level Liquid Types \footcite{rondon_liquid_2008}, \footcite{rondon_low-level_2010}
+Low-Level Liquid Types (LTLL) \footcite{rondon_liquid_2008}, \footcite{rondon_low-level_2010}
 \begin{itemize}
     \item Refinement types where predicates are conjunctions over qualifiers
     \item Functions qualified over locations they operate on
     \item Deal with collections using \emph{location folding} for checking out a copy to do strong updates on
+%    \item Tries to deal with lack of types, mutation, unbounded collections that make type-based mechanisms difficult
 \end{itemize}
 % TODO how is Tyr different/better than Deputy? its 2016, what changed?
 T\'yr \footcite{de_araujo_tyr:_2016}
@@ -1105,19 +1127,23 @@ Low* \footcite{protzenko_verified_2017}
 \end{itemize}
 \end{frame}
 
-% TODO add this frame back in
-%\begin{frame}{An Overview of Spatial Safety Approaches}
-%Several deficiencies
-%\begin{itemize}
-%  \item High runtime overhead
-%  \item Incomplete detection of spatial violations
-%  \item Incompatible pointer representations (changing memory layout)
-%  \item  Non-trivial changes to source code
-%  \item Whole program analyses (for low-overhead) [e.g. Dhurjati 2006, Necula 2005]
-%  \item Some of these aren't complete or sound
-%  \item  Completely detecting buffer overflow (i.e. bounds) in general is undecidable!
-%\end{itemize}
-%\end{frame}
+\begin{frame}{Quick Spatial Recap}
+Spatial Safety
+\begin{itemize}
+    \item Unsafe languages like C conflate arrays and pointers, casts eliminate any semblance of type guarantees \note{types are just for size}
+    \item Completely detecting buffer overflow in general is undecidable \note{so we try runtime things}
+    \item Fat pointers: complete spatial safety at cost of compatibility
+    \item Referent objects: partial safety and better compatibility
+    \item Dependent types: prove in-bounds access at compile-time, emit run-time checks for full safety
+    \item Solution seems to be (besides type-safe language):
+        \begin{itemize}
+            \item Restrict C
+            \item Limited form of bounds type information
+            \item Constraint solving
+            \item Runtime checks
+        \end{itemize}
+\end{itemize}
+\end{frame}
 
 \section{Temporal Safety}
 
@@ -1129,13 +1155,6 @@ Prevent accessing object that has been \emph{previously deallocated}
    \item Effects and regions
    \item Linear types, ownership, and borrowing
 \end{itemize}
-
-Really boils down to:
-\begin{itemize}
-    \item Preventing use-after-free
-    \item Eliminating free entirely \note{so 'use-after' has no meaning}
-\end{itemize}
-
 \end{frame}
 
 \begin{frame}[fragile]{Temporal Safety Example}
@@ -1162,7 +1181,6 @@ Really boils down to:
 }
 \end{lstlisting}
 
-
 \onslide<7->
 \footnotesize{
 Potential pointer dereference problems:
@@ -1170,6 +1188,12 @@ Potential pointer dereference problems:
       \item Dangling pointers/memory leaks
       \item Double frees
   \end{itemize}
+
+Really boils down to:
+\begin{itemize}
+    \item Preventing use-after-free
+    \item Eliminating free entirely \note{so 'use-after' has no meaning}
+\end{itemize}
 }
 \end{frame}
 
@@ -1210,7 +1234,6 @@ Several of the pointer- and object-based approaches in the previous section also
     \end{itemize}
 \end{frame}
 % (Zorn: measured cost of conservative GC: 1993)
-
 % TODO where to put these
 % Pointer-based
 %    * [ ] CETS: Nagarakatte 2010, SoftboundCETS: nagarakatte 2015
