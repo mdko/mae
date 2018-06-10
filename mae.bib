@@ -212,7 +212,6 @@ The effect system we describe performs certain kinds of side-effect analysis tha
 
 @inproceedings{jim_cyclone:_2002,
 	title = {Cyclone: {A} {Safe} {Dialect} of {C}.},
-	shorttitle = {Cyclone},
 	url = {https://www.usenix.org/legacy/events/usenix02/full_papers/jim/jim_html/},
 	urldate = {2017-08-08},
 	booktitle = {{USENIX} {Annual} {Technical} {Conference}, {General} {Track}},
@@ -2827,7 +2826,7 @@ The techniques presented in this paper are backed up by working code. They are a
 	publisher = {ACM},
 	author = {Chisnall, David and Rothwell, Colin and Watson, Robert N.M. and Woodruff, Jonathan and Vadera, Munraj and Moore, Simon W. and Roe, Michael and Davis, Brooks and Neumann, Peter G.},
 	year = {2015},
-	keywords = {security, memory safety, bounds checking, C language, capabilities, compilers, memory protection, processor design},
+	keywords = {security, memory safety, bounds checking, C language, capabilities, compilers, memory protection, processor design, TO-READ},
 	pages = {117--130},
 	file = {Chisnall et al_2015_Beyond the PDP-11.pdf:/home/michael/Dropbox/zotero-pdfs/C/Chisnall et al_2015_Beyond the PDP-11.pdf:application/pdf}
 }
@@ -3244,7 +3243,7 @@ The techniques presented in this paper are backed up by working code. They are a
 	number = {1},
 	urldate = {2017-08-10},
 	journal = {Nordic journal of philosophical logic},
-	author = {Martin-Löf, Per},
+	author = {Martin-LÖf, Per},
 	year = {1996},
 	keywords = {classic-PL},
 	pages = {11--60},
@@ -19903,7 +19902,193 @@ Fun is mathematically simple and can serve as a basis for the design and impleme
 	journal = {Software: Practice and Experience},
 	author = {Simpson, Matthew S. and Barua, Rajeev K.},
 	year = {2013},
-	keywords = {memory safety, programming languages, reliability, verification},
+	keywords = {memory safety, programming languages, verification, reliability},
 	pages = {93--128},
 	file = {Simpson_Barua_2013_MemSafe.pdf:/home/michael/Dropbox/zotero-pdfs/S/Simpson_Barua_2013_MemSafe.pdf:application/pdf}
+}
+
+@article{wadler_propositions_2015,
+	title = {Propositions as types},
+	volume = {58},
+	issn = {00010782},
+	url = {http://dl.acm.org/citation.cfm?doid=2847579.2699407},
+	doi = {10.1145/2699407},
+	language = {en},
+	number = {12},
+	urldate = {2018-06-07},
+	journal = {Communications of the ACM},
+	author = {Wadler, Philip},
+	month = nov,
+	year = {2015},
+	pages = {75--84},
+	file = {Wadler - 2015 - Propositions as types.pdf:/home/michael/Zotero/storage/6C29G2BB/Wadler - 2015 - Propositions as types.pdf:application/pdf}
+}
+
+@article{pincus_beyond_2004,
+	title = {Beyond stack smashing: recent advances in exploiting buffer overruns},
+	volume = {2},
+	issn = {1540-7993},
+	shorttitle = {Beyond stack smashing},
+	doi = {10.1109/MSP.2004.36},
+	abstract = {Security vulnerabilities related to buffer overruns account for the largest share of CERT advisories, as well as high-profile worms - from the original Internet Worm in 1987 through Blaster's appearance in 2003. When malicious crackers discover a vulnerability, they devise exploits that take advantage of the vulnerability to attack a system. The article describes three powerful general-purpose families of exploits for buffer overruns: arc injection, pointer subterfuge, and heap smashing. These new techniques go beyond the traditional "stack smashing" attack and invalidate traditional assumptions about buffer overruns.},
+	number = {4},
+	journal = {IEEE Security Privacy},
+	author = {Pincus, J. and Baker, B.},
+	month = jul,
+	year = {2004},
+	keywords = {Privacy, Java, computer crime, storage management, buffer overruns, 65, arc injection, attacking systems, CERT advisories, Computer hacking, Computer security, Computer worms, exploits, heap smashing, high-profile worms, Lab-on-a-chip, malicious crackers, Payloads, pointer subterfuge, Power system security, Runtime environment, security vulnerabilities, stack smashing},
+	pages = {20--27},
+	file = {Pincus_Baker_2004_Beyond stack smashing.pdf:/home/michael/Dropbox/zotero-pdfs/P/Pincus_Baker_2004_Beyond stack smashing.pdf:application/pdf}
+}
+
+@inproceedings{delozier_ironclad_2013,
+	address = {New York, NY, USA},
+	series = {{OOPSLA} '13},
+	title = {Ironclad {C}++: {A} {Library}-augmented {Type}-safe {Subset} of {C}++},
+	isbn = {978-1-4503-2374-1},
+	shorttitle = {Ironclad {C}++},
+	url = {http://doi.acm.org/10.1145/2509136.2509550},
+	doi = {10.1145/2509136.2509550},
+	abstract = {The C++ programming language remains widely used, despite inheriting many unsafe features from C---features that often lead to failures of type or memory safety that manifest as buffer overflows, use-after-free vulnerabilities, or abstraction violations. Malicious attackers can exploit such violations to compromise application and system security. This paper introduces Ironclad C++, an approach to bringing the benefits of type and memory safety to C++. Ironclad C++ is, in essence, a library-augmented, type-safe subset of C++. All Ironclad C++ programs are valid C++ programs that can be compiled using standard, off-the-shelf C++ compilers. However, not all valid C++ programs are valid Ironclad C++ programs: a syntactic source-code validator statically prevents the use of unsafe C++ features. To enforce safety properties that are difficult to check statically, Ironclad C++ applies dynamic checks via templated ``smart pointer'' classes. Using a semi-automatic refactoring tool, we have ported nearly 50K lines of code to Ironclad C++. These benchmarks incur a performance overhead of 12\% on average, compared to the original unsafe C++ code.},
+	urldate = {2018-06-07},
+	booktitle = {Proceedings of the 2013 {ACM} {SIGPLAN} {International} {Conference} on {Object} {Oriented} {Programming} {Systems} {Languages} \& {Applications}},
+	publisher = {ACM},
+	author = {DeLozier, Christian and Eisenberg, Richard and Nagarakatte, Santosh and Osera, Peter-Michael and Martin, Milo M.K. and Zdancewic, Steve},
+	year = {2013},
+	keywords = {memory safety, c++, local pointers, type-safety},
+	pages = {287--304},
+	file = {DeLozier et al_2013_Ironclad C++.pdf:/home/michael/Dropbox/zotero-pdfs/D/DeLozier et al_2013_Ironclad C++.pdf:application/pdf}
+}
+
+@book{lee_preventing_2015,
+	title = {Preventing {Use}-after-free with {Dangling} {Pointers} {Nullification}},
+	abstract = {Abstract—Many system components and network applications are written in languages that are prone to memory corruption vulnerabilities. There have been countless cases where simple mistakes by developers resulted in memory corruption vulnera-bilities and consequently security exploits. While there have been tremendous research efforts to mitigate these vulnerabilities, use-after-free still remains one of the most critical and popular attack vectors because existing proposals have not adequately addressed the challenging program analysis and runtime performance issues. In this paper we present DANGNULL, a system that detects temporal memory safety violations—in particular, use-after-free and double-free—during runtime. DANGNULL relies on the key observation that the root cause of these violations is that pointers are not nullified after the target object is freed. Based on this observation, DANGNULL automatically traces the object’s rela-tionships via pointers and automatically nullifies all pointers when the target object is freed. DANGNULL offers several benefits. First, DANGNULL addresses the root cause of temporal memory safety violations. It does not rely on the side effects of violations, which can vary and may be masked by attacks. Thus, DANGNULL is ef-fective against even the most sophisticated exploitation techniques. Second, DANGNULL checks object relationship information using runtime object range analysis on pointers, and thus is able to keep track of pointer semantics more robustly even in complex and large scale software. Lastly, DANGNULL does not require numerous explicit sanity checks on memory accesses because it can detect a violation with implicit exception handling, and thus its detection capabilities only incur moderate performance overhead. I.},
+	author = {Lee, Byoungyoung and Song, Chengyu and Jang, Yeongjin and Wang, Tielei and Kim, Taesoo and Lu, Long and Lee, Wenke},
+	year = {2015},
+	file = {Lee et al_2015_Preventing Use-after-free with Dangling Pointers Nullification.pdf:/home/michael/Dropbox/zotero-pdfs/L/Lee et al_2015_Preventing Use-after-free with Dangling Pointers Nullification.pdf:application/pdf}
+}
+
+@inproceedings{ye_wpbound:_2014,
+	title = {{WPBOUND}: {Enforcing} {Spatial} {Memory} {Safety} {Efficiently} at {Runtime} with {Weakest} {Preconditions}},
+	shorttitle = {{WPBOUND}},
+	doi = {10.1109/ISSRE.2014.20},
+	abstract = {Spatial errors (e.g., Buffer overflows) continue to be one of the dominant threats to software reliability and security in C/C++ programs. Presently, the software industry typically enforces spatial memory safety by instrumentation. Due to high overheads incurred in bounds checking at runtime, many program inputs cannot be exercised, causing some input-specific spatial errors to go undetected in today's commercial software. This paper introduces a new compile-time optimisation for reducing bounds checking overheads based on the notion of Weakest Precondition (WP). The basic idea is to guard a bounds check at a pointer dereference inside a loop, where the WP-based guard is hoisted outside the loop, so that its falsehood implies the absence of out-of-bounds errors at the dereference, thereby avoiding the corresponding bounds check inside the loop. This WP-based optimisation is applicable to any spatial-error detection approach (in software or hardware or both). To evaluate the effectiveness of our optimisation, we take SOFTBOUND, a compile-time tool with an open-source implementation in LLVM, as our baseline. SOFTBOUND adopts a pointer-based checking approach with disjoint metadata, making it a state-of-the-art tool in providing compatible and complete spatial safety for C. Our new tool, called WPBOUND, is a refined version of SOFTBOUND, also implemented in LLVM, by incorporating our WP-based optimisation. For a set of 12 SPEC C benchmarks evaluated, WPBOUND reduces the average (geometric mean) slowdown of SOFTBOUND from 71\% to 45\% (by a reduction of 37\%), with small code size increases.},
+	booktitle = {2014 {IEEE} 25th {International} {Symposium} on {Software} {Reliability} {Engineering}},
+	author = {Ye, D. and Su, Y. and Sui, Y. and Xue, J.},
+	month = nov,
+	year = {2014},
+	keywords = {Runtime, TO-READ, LLVM, program verification, Hardware, Safety, software reliability, Software, Instruments, bounds checking overheads, buffer overflows, C/C++ programs, C++ language, compile-time optimisation, compile-time tool, disjoint metadata, dominant threats, input-specific spatial errors, meta data, open-source implementation, optimisation, optimising compilers, Optimization, out-of-bounds errors, pointer dereference, pointer-based checking approach, safety-critical software, SOFTBOUND, software fault tolerance, software industry, software security, spatial memory safety, spatial-error detection approach, Upper bound, weakest preconditions, WP-based guard, WP-based optimisation, WPBOUND},
+	pages = {88--99},
+	file = {Ye et al_2014_WPBOUND.pdf:/home/michael/Dropbox/zotero-pdfs/Y/Ye et al_2014_WPBOUND.pdf:application/pdf}
+}
+
+@inproceedings{nagarakatte_watchdoglite:_2014,
+	address = {New York, NY, USA},
+	series = {{CGO} '14},
+	title = {{WatchdogLite}: {Hardware}-{Accelerated} {Compiler}-{Based} {Pointer} {Checking}},
+	isbn = {978-1-4503-2670-4},
+	shorttitle = {{WatchdogLite}},
+	url = {http://doi.acm.org/10.1145/2544137.2544147},
+	doi = {10.1145/2544137.2544147},
+	abstract = {Lack of memory safety in C is the root cause of a multitude of serious bugs and security vulnerabilities. Numerous software-only and hardware-based schemes have been proposed to enforce memory safety. Among these approaches, pointer-based checking, which maintains per-pointer metadata in a disjoint metadata space, has been recognized as providing comprehensive memory safety. Software approaches for pointer-based checking have high performance overheads. In contrast, hardware approaches introduce a myriad of hardware structures and widgets to mitigate those performance overheads. This paper proposes WatchdogLite, an ISA extension that provides hardware acceleration for a compiler implementation of pointer-based checking. This division of labor between the compiler and the hardware allows for hardware acceleration while using only preexisting architectural registers. By leveraging the compiler to identify pointers, perform check elimination, and insert the new instructions, this approach attains performance similar to prior hardware-intensive approaches without adding any hardware structures for tracking metadata.},
+	urldate = {2018-06-07},
+	booktitle = {Proceedings of {Annual} {IEEE}/{ACM} {International} {Symposium} on {Code} {Generation} and {Optimization}},
+	publisher = {ACM},
+	author = {Nagarakatte, Santosh and Martin, Milo M. K. and Zdancewic, Steve},
+	year = {2014},
+	keywords = {memory safety, bounds checking, spatial safety, temporal safety, use-after-free checking},
+	pages = {175:175--175:184},
+	file = {Nagarakatte et al_2014_WatchdogLite.pdf:/home/michael/Dropbox/zotero-pdfs/N/Nagarakatte et al_2014_WatchdogLite.pdf:application/pdf}
+}
+
+@inproceedings{nagarakatte_watchdog:_2012,
+	address = {Washington, DC, USA},
+	series = {{ISCA} '12},
+	title = {Watchdog: {Hardware} for {Safe} and {Secure} {Manual} {Memory} {Management} and {Full} {Memory} {Safety}},
+	isbn = {978-1-4503-1642-2},
+	shorttitle = {Watchdog},
+	url = {http://dl.acm.org/citation.cfm?id=2337159.2337181},
+	abstract = {Languages such as C and C++ use unsafe manual memory management, allowing simple bugs (i.e., accesses to an object after deallocation) to become the root cause of exploitable security vulnerabilities. This paper proposes Watchdog, a hardware-based approach for ensuring safe and secure manual memory management. Inspired by prior software-only proposals, Watchdog generates a unique identifier for each memory allocation, associates these identifiers with pointers, and checks to ensure that the identifier is still valid on every memory access. This use of identifiers and checks enables Watchdog to detect errors even in the presence of reallocations. Watchdog stores these pointer identifiers in a disjoint shadow space to provide comprehensive protection and ensure compatibility with existing code. To streamline the implementation and reduce runtime overhead: Watchdog (1) uses micro-ops to access metadata and perform checks, (2) eliminates metadata copies among registers via modified register renaming, and (3) uses a dedicated metadata cache to reduce checking overhead. Furthermore, this paper extends Watchdog's mechanisms to detect bounds errors, thereby providing full hardware-enforced memory safety at low overheads.},
+	urldate = {2018-06-07},
+	booktitle = {Proceedings of the 39th {Annual} {International} {Symposium} on {Computer} {Architecture}},
+	publisher = {IEEE Computer Society},
+	author = {Nagarakatte, Santosh and Martin, Milo M. K. and Zdancewic, Steve},
+	year = {2012},
+	pages = {189--200},
+	file = {Nagarakatte et al_2012_Watchdog.pdf:/home/michael/Dropbox/zotero-pdfs/N/Nagarakatte et al_2012_Watchdog.pdf:application/pdf}
+}
+
+@inproceedings{akritidis_cling:_2010,
+	address = {Berkeley, CA, USA},
+	series = {{USENIX} {Security}'10},
+	title = {Cling: {A} {Memory} {Allocator} to {Mitigate} {Dangling} {Pointers}},
+	shorttitle = {Cling},
+	url = {http://dl.acm.org/citation.cfm?id=1929820.1929836},
+	abstract = {Use-after-free vulnerabilities exploiting so-called dangling pointers to deallocated objects are just as dangerous as buffer overflows: they may enable arbitrary code execution. Unfortunately, state-of-the-art defenses against use-after-free vulnerabilities require compiler support, pervasive source code modifications, or incur high performance overheads. This paper presents and evaluates Cling, a memory allocator designed to thwart these attacks at runtime. Cling utilizes more address space, a plentiful resource on modern machines, to prevent type-unsafe address space reuse among objects of different types. It infers type information about allocated objects at runtime by inspecting the call stack of memory allocation routines. Cling disrupts a large class of attacks against use-after-free vulnerabilities, notably including those hijacking the C++ virtual function dispatch mechanism, with low CPU and physical memory overhead even for allocation intensive applications.},
+	urldate = {2018-06-08},
+	booktitle = {Proceedings of the 19th {USENIX} {Conference} on {Security}},
+	publisher = {USENIX Association},
+	author = {Akritidis, Periklis},
+	year = {2010},
+	pages = {12--12},
+	file = {Akritidis_2010_Cling.pdf:/home/michael/Dropbox/zotero-pdfs/A/Akritidis_2010_Cling.pdf:application/pdf}
+}
+
+@article{eigler_mudflap:_2003,
+	title = {Mudflap: {Pointer} {Use} {Checking} {C}/{C}++},
+	url = {http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.5.9896&rep=rep1&type=pdf#page=57},
+	urldate = {2018-06-08},
+	journal = {Proceedings of the First Annual GCC Developers’ Summit},
+	author = {Eigler, Frank},
+	year = {2003},
+	pages = {57--70},
+	file = {Eigler_2003_Mudflap.pdf:/home/michael/Dropbox/zotero-pdfs/E/Eigler_2003_Mudflap.pdf:application/pdf}
+}
+
+@inproceedings{nagarakatte_cets:_2010,
+	address = {New York, NY, USA},
+	series = {{ISMM} '10},
+	title = {{CETS}: {Compiler} {Enforced} {Temporal} {Safety} for {C}},
+	isbn = {978-1-4503-0054-4},
+	shorttitle = {{CETS}},
+	url = {http://doi.acm.org/10.1145/1806651.1806657},
+	doi = {10.1145/1806651.1806657},
+	abstract = {Temporal memory safety errors, such as dangling pointer dereferences and double frees, are a prevalent source of software bugs in unmanaged languages such as C. Existing schemes that attempt to retrofit temporal safety for such languages have high runtime overheads and/or are incomplete, thereby limiting their effectiveness as debugging aids. This paper presents CETS, a compile-time transformation for detecting all violations of temporal safety in C programs. Inspired by existing approaches, CETS maintains a unique identifier with each object, associates this metadata with the pointers in a disjoint metadata space to retain memory layout compatibility, and checks that the object is still allocated on pointer dereferences. A formal proof shows that this is sufficient to provide temporal safety even in the presence of arbitrary casts if the program contains no spatial safety violations. Our CETS prototype employs both temporal check removal optimizations and traditional compiler optimizations to achieve a runtime overhead of just 48\% on average. When combined with a spatial-checking system, the average overall overhead is 116\% for complete memory safety},
+	urldate = {2018-06-08},
+	booktitle = {Proceedings of the 2010 {International} {Symposium} on {Memory} {Management}},
+	publisher = {ACM},
+	author = {Nagarakatte, Santosh and Zhao, Jianzhou and Martin, Milo M.K. and Zdancewic, Steve},
+	year = {2010},
+	keywords = {memory safety, c, dangling pointers, temporal errors},
+	pages = {31--40},
+	file = {Nagarakatte et al_2010_CETS.pdf:/home/michael/Dropbox/zotero-pdfs/N/Nagarakatte et al_2010_CETS.pdf:application/pdf}
+}
+
+@inproceedings{akritidis_preventing_2008,
+	title = {Preventing {Memory} {Error} {Exploits} with {WIT}},
+	doi = {10.1109/SP.2008.30},
+	abstract = {Attacks often exploit memory errors to gain control over the execution of vulnerable programs. These attacks remain a serious problem despite previous research on techniques to prevent them. We present write integrity testing (WIT), a new technique that provides practical protection from these attacks. WIT uses points-to analysis at compile time to compute the control-flow graph and the set of objects that can be written by each instruction in the program. Then it generates code instrumented to prevent instructions from modifying objects that are not in the set computed by the static analysis, and to ensure that indirect control transfers are allowed by the control-flow graph. To improve coverage where the analysis is not precise enough, WIT inserts small guards between the original program objects. We describe an efficient implementation with optimizations to reduce space and time overhead. This implementation can be used in practice because it compiles C and C++ programs without modifications, it has high coverage with no false positives, and it has low overhead. WIT's average runtime overhead is only 7\% across a set of CPU intensive benchmarks and it is negligible when IO is the bottleneck.},
+	booktitle = {2008 {IEEE} {Symposium} on {Security} and {Privacy} (sp 2008)},
+	author = {Akritidis, P. and Cadar, C. and Raiciu, C. and Costa, M. and Castro, M.},
+	month = may,
+	year = {2008},
+	keywords = {Privacy, security of data, Protection, static analysis, program diagnostics, Runtime, Security, program compilers, Error correction, Testing, instrumentation, C program, Instruments, attack detection, C++ program, Color, Computer aided instruction, control-flow graph, data flow graphs, Gain control, memory error exploit prevention, memory errors, points-to analysis, program compilation, program control structures, program testing, vulnerable program execution control, write integrity testing},
+	pages = {263--277}
+}
+
+@incollection{ou_dynamic_2004,
+	series = {{IFIP} {International} {Federation} for {Information} {Processing}},
+	title = {Dynamic {Typing} with {Dependent} {Types}},
+	isbn = {978-1-4020-8140-8 978-1-4020-8141-5},
+	url = {https://link.springer.com/chapter/10.1007/1-4020-8141-3_34},
+	abstract = {Dependent type systems are promising tools programmers can use to increase the reliability and security of their programs. Unfortunately, dependently-typed programming languages require programmers to annotate their programs with many typing specifications to help guide the type checker. This paper shows how to make the process of programming with dependent types more palatable by defining a language in which programmers have fine-grained control over the trade-off between the number of dependent typing annotations they must place on programs and the degree of compile-time safety. More specifically, certain program fragments are marked dependent, in which case the programmer annotates them in detail and a dependent type checker verifies them at compile time. Other fragments are marked simple, in which case they may be annotation-free and dependent constraints are verified at run time.},
+	language = {en},
+	urldate = {2018-06-09},
+	booktitle = {Exploring {New} {Frontiers} of {Theoretical} {Informatics}},
+	publisher = {Springer, Boston, MA},
+	author = {Ou, Xinming and Tan, Gang and Mandelbaum, Yitzhak and Walker, David},
+	year = {2004},
+	doi = {10.1007/1-4020-8141-3_34},
+	pages = {437--450},
+	file = {Ou et al_2004_Dynamic Typing with Dependent Types.pdf:/home/michael/Dropbox/zotero-pdfs/O/Ou et al_2004_Dynamic Typing with Dependent Types.pdf:application/pdf}
 }
