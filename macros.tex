@@ -190,6 +190,11 @@
 }
 \makeatother
 
+% more coloring in equations?
+\newcommand{\colorIt}[3]{
+   \tikz[baseline]{ \node[fill=#1!20,anchor=base,rounded corners=2pt] (#2) {\ensuremath{#3}};}
+}
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
