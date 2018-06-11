@@ -13,7 +13,7 @@
 %\setbeamercovered{transparent}
 
 \usetheme[titleformat=regular%
-,numbering=fraction% use slide numbers
+%,numbering=fraction% use slide numbers
 ]{metropolis}
 \metroset{%
   progressbar=foot,%
@@ -122,34 +122,28 @@ Embedded Systems, \pause Compilers, \pause Garbage Collectors, \pause Device Dri
         \end{itemize}
     \item C: the unsafe standard
         \begin{itemize}
-            \item Unchecked array operations $\Rightarrow$ buffer overflows
-            \item Pointers $\equiv$ arrays $\Rightarrow$ hazardous pointer arithmetic
-            \item Unsafe casts $\Rightarrow$ read/write arbitrary addresses, untyped
-            \item Aliasing $\Rightarrow$ dangling pointers, double frees, null dereferences
-            \item Undefined behavior $\Rightarrow$ \todo{insert nuke}
+            \item Unchecked array operations \note{buffer overflows}
+            \item Pointers $\equiv$ arrays \note{hazardous pointer arithmetic}
+            \item Unsafe casts \note{read/write arbitrary addresses, untyped}
+            \item Aliasing \note{dangling pointers, double frees, null dereferences}
+            \item \alert{Undefined behavior}
         \end{itemize}
 \end{itemize}
 \end{frame}
 
 \note[itemize]{
-\item possibly add OS lang was used for, date
 \item ALGOL: formally defined syntax (OS: Burroughs, VME, Cambridge CAP)
 \item PL/I: (OS: Multics)
 \item Mesa, Cedar: rich exceptions, GC
 \item Pascal (1971), Modula-2 (1982), Oberon (1988)
-\item -- structured programming
-\item -- records
-\item -- pointers,
-\item -- dynamic allocation,
-\item -- information hiding,
-\item -- objects
+\item -- structured programming, records, pointers, dynamic allocation, information hiding, objects
 % see mae3.org, mae4.org
 }
 
 \begin{frame}{Memory Safety}
 \begin{itemize}[<+->]
     %\item Memory safety error: ``Any dereference of a pointer or subscripted array reference which reads or writes storage outside of the referent'' \footcite{austin_efficient_1994}
-    \item Memory safety error: Dereferencing a pointer which reads or writes storage outside of the referent
+    \item Memory safety error: reads or writes outside the referent's storage
         \begin{itemize}
             \item Spatial: outside referent's \alert{address bounds}
             \item Temporal: outside referent's \alert{lifetime}
@@ -298,7 +292,6 @@ Potential pointer dereference problems:
 \subsection{Fat Pointers and Shadow Structures}
 
 \begin{frame}[fragile]{Fat Pointers}
-  \footnotesize
 %Fat Pointers
 \vspace{-0.1in}
 \pause
@@ -307,7 +300,7 @@ Potential pointer dereference problems:
 \begin{itemize}[<+->]
  \item Added base and bound addresses \note{multiword, and other information}
  \item Instrument all pointers and functions
- \item Insert runtime checks \alert{before dereferences}, not arithmetic \note{as opposed to during arith, let arithmetic happen as usual}
+ \item Insert runtime checks \alert{before dereferences} \note{as opposed to during arith, let arithmetic happen as usual}
  \item Advantages:
      \begin{itemize}
         \item Quickly find and retrieve metadata \note{no costly db lookup}
@@ -317,9 +310,9 @@ Potential pointer dereference problems:
  \item Disadvantages:
      \begin{itemize}
         \item Breaks binary compatibility \note{calling convention of external/uninstrumented libraries, storing pointer in register, casting ptr to int and back}
-        \item Metadata propagation on pointer assignment
+        \item Metadata propagation \note{on pointer assignment}
         \item Code bloat, memory usage, runtime overhead \note{up to 200, because of added checks, bigger ptrs}
-        \item Unsafe casts can overwrite metadata
+        \item Unsafe casts overwriting metadata
      \end{itemize}
 \end{itemize}
 \end{column}
@@ -329,10 +322,12 @@ Potential pointer dereference problems:
    \pause
 
 \begin{lstlisting}[
-    language=C,mathescape,basicstyle={\scriptsize\ttfamily}]
+    language=C,mathescape,basicstyle={\scriptsize\ttfamily},
+    moredelim={**[is][\btHL<15>]{@1}{@}},
+]
 struct fptr { int *curr;
      int *base; int *bound; };
-struct { struct fptr arr; int i; } s;
+struct { @1struct fptr arr;@ int i; } s;
 s.arr.curr = calloc(3, sizeof(int));
 \end{lstlisting}
 
@@ -400,6 +395,9 @@ Cyclone \footcite{jim_cyclone:_2002}: \note{offshoot of TAL/popcorn}
 \vspace{0.1in}
 
 \end{frame}
+\note[itemize]{
+\item Cyclone requires more annotations by user than CCured
+}
 
 \begin{frame}{Fat Pointer Approaches}
  CCured \footcite{necula_ccured:_2002}
@@ -415,6 +413,7 @@ Cyclone \footcite{jim_cyclone:_2002}: \note{offshoot of TAL/popcorn}
     \note{safe: if not null, guaranteed to point to memory are containing compatibly-typed object}
     \note{Relies on a garbage collector}
     \note{3\%-87\% runtime overhead increase}
+    \note{quarantine wild/type-unsafe part from type-safe part}
 \end{itemize}
 
 % possible 2005: fig 5-6 
@@ -423,11 +422,15 @@ Cyclone \footcite{jim_cyclone:_2002}: \note{offshoot of TAL/popcorn}
 
 Fail-Safe C \footcite{oiwa_implementation_2009}:
 \begin{itemize}
-    \item Combines fat pointers w/ fat integers and virtual structure offsets
+    \item Combines fat pointers w/ fat integers and virtual structure offsets \note{handles casts fine}
 \end{itemize}
 
 \vspace{0.2in}
 \end{frame}
+
+\note[itemize]{
+\item CCured does translation of C programs to CCured most automatically
+}
 
 % use CCured syntax (2002, 2005 has a good translation definition)
 \begin{frame}[fragile]{Fat Pointers Preventing Spatial Errors}
@@ -471,17 +474,17 @@ int find_token(int *@3SEQ@ data,
                int token)
 {
     int *@3SEQ@ p = data;
-    @5while (p.value < end)@ {
+    @5while (p.cur < end)@ {
         @6assert(p.base != 0 &&@
-        @6         0 <= p.value &&@
-        @6         p.value < p.bound);@
-        @6if (*p.value == token) break;@
-        @7p.value = p.value + (1 * sizeof(int));@
+        @6         0 <= p.cur &&@
+        @6         p.cur < p.bound);@
+        @6if (*p.cur == token) break;@
+        @7p.cur = p.cur + (1 * sizeof(int));@
         @7p.base  = p.base;@   // optimized out
         @7p.bound = p.bound;@  // "           "
     }
     @6...(repeat lines 7-9)...@
-    @5return (*p.value == token);@
+    @5return (*p.cur == token);@
 }
 \end{lstlisting}
 \end{column}
@@ -578,9 +581,8 @@ int find_token(
     \item Metadata about \alert{objects}, not pointers
     \item Global database relates every allocated address to corresponding object metadata \note{updating on alloc, dealloc, on function entry/exit for stack-based objects, program startup for global object}
     \item Every pointer to same object shares same metadata
-    \item Bounds check on \alert{pointer arithmetic} \note{and array indexing} to ensure validity of derived pointers \note{i.e. point to same object}
+    \item Bounds check on \alert{pointer arithmetic} \note{okay to have OOB ptr, if used for comparison, to ensure validity of derived pointers, point to same object}
     \item 2-12x overhead
-    %\item do not check pointer derferences
 \end{itemize}
 \end{column}
 
@@ -606,7 +608,7 @@ Disadvantages:
 \end{frame}
 
 \note[itemize]{
-\item jones and kelly: pad objects w/ extra byte
+\item jones and kelly: pad objects w/ extra byte to help with legal out-of-bounds ptr: ptr to a[N] is distinguishable from next object
 \item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
 \item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
 \item Incomplete because cannot pad parameters, would change layout
@@ -642,28 +644,6 @@ Disadvantages:
 \item out-of-bounds pointer to an inner object remains within bounds of the outer object.
 }
 
-% TODO possibly "Applied to linux kernel: Criswell Secure virtual arch 2007"
-
-%\begin{frame}{Referent Objects Approaches}
-%J\&K \footcite{jones_backwards_1997}
-%    \begin{itemize}
-%       %\item Maintain table of all known valid storage objects
-%       %\item Map a ptr to a desciptor of the object into which it points
-%       \item Pad objects w/ extra byte \todo{why}
-%       %\item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
-%       %\item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
-%       \item Incomplete because cannot pad parameters \note{would change layout}
-%       \item 11-12x overhead
-%    \end{itemize}
-%
-%CRED \footcite{ruwase_practical_2004}
-%    \begin{itemize}
-%      \item More generic solution \todo{how}
-%      \item 2x overhead
-%    \end{itemize}
-%\vspace{0.2in}
-%\end{frame}
-
 \begin{frame}[fragile]{Referent Objects Approaches}
 SafeCode \footcite{dhurjati_backwards-compatible_2006}
     \begin{itemize}
@@ -676,18 +656,22 @@ SafeCode \footcite{dhurjati_backwards-compatible_2006}
 
 Baggy Bounds Checking (BBC) \footcite{akritidis_baggy_2009}
     \begin{itemize}
-    %\item Trades memory for performance \note{fastest object bounds checker}
     \item Compact bounds representation and efficient way to look up object bounds
-    \item Pad every object s.t. size is power of two, align base addresses to be multiple of their padded size
+    \item Align base addresses to be multiple of padded size
     \item Replace splay tree with small lookup table
     \item 0.6x overhead \note{on SPECINT 2000 benchmark}
-    %\item partition memory into slots with slot_size bytes (table has entry per slot rather than per byte)
     \end{itemize}
 \vspace{0.2in}
-% TODO read this paper more: great succinct explanation of this approach (p 2)
 
 %PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead}
 \end{frame}
+\note[itemize]{
+   \item Trades memory for performance \note{fastest object bounds checker}
+   \item partition memory into slots with slot_size bytes (table has entry per slot rather than per byte)
+   \item Pad every object s.t. size is power of two, align base addresses to be multiple of their padded size
+   \item mark if OOB to prevent later dereference
+   \item handle OOB withint slot_size/2 bytes from original object
+}
 
 \begin{frame}[fragile]{Referent Objects Example}
 \footnotesize
@@ -768,44 +752,20 @@ int find_token(int *data,
 \footnotesize
 Softbound \footcite{nagarakatte_softbound:_2009}
     \begin{itemize}[<+->]
-        \item Base and bound metadata for each pointer, stored in disjoint metadata space (via table lookups) \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
+        \item Base and bound metadata for each pointer, stored in disjoint metadata table \note{like pointer-based and object approaches, two-level trie data structure in disjoint metadata space}
         \item Total spatial safety of pointer-based approaches \note{eliminate sub-object problem}
         \item Source compatibility, separate compilation of object-based approaches
         \item Runtime bounds checks on each dereference
         \item Propagate metadata as extra arguments \note{to function calls, wrappers for commonly-used libraries, must transform every func decl/call-site, or shadow stack (nagarakatte thesis)}
         \item Arbitrary casts allowed \note{just check ptr involved in casts on derfernce w.r.t to its metadata, no way to overwrite metadata}
         \item 67\% overhead
-%        \item Must protect every module for *complete* safety (untrusted module can modify ptr, table is out-of-sync)
-%        \item Only store metadata in disjoint space for pointers in memory, perform metadata loads/stores only when loaded/stored value from/into memory loc is a ptr
-%        \item Wrappers for commonly used libraries
     \end{itemize}
 \end{frame}
-% TODO lookup how 'lookup works'
-
-% TODO update running example, or add in softbounds pictures! (or reserve for CETS)
-
-%\begin{frame}{Hardware Approaches to Spatial Safety}<presentation:0>
-%    \begin{itemize}
-%       \item Hardbound: Devietti 2008
-%       \item Intel MPX %: \verbatim{https://gcc.gnu.org/wiki/Intel%20MPX%20support%20in%20the%20GCC%20compiler}
-%       \item Watchdog: Nagarakatte 2012
-%       \item (Hybrid): WatchdogLite
-%    \end{itemize}
-%\end{frame}
-
-%\begin{frame}{Other Spatial Approaches}<presentation:0>
-%\begin{itemize}
-% \item (Also: tripwire approaches, mostly for testing): TODO need to have reason why I'm skipping
-% \item Hastings Purify 1992 (reveal during testing), object based, has temporal safety
-% \item Nethercote Valgrind 2007 (reveal during testing)
-% \item Qin SafeMem 2005
-% \item Venkataramani Memtracker 2007
-% \item Yong "Protecting C" 2003
-% \item Serebryany AddressSanitizer 2012: object-based, has temporal safety
-%\end{itemize}
-%\end{frame}
-
-% TODO describe why not mentioning ETC/LCLint/CSSV/Abcd are static analyzers, not built-in lang techniques
+\note[itemize]{
+    \item Must protect every module for *complete* safety (untrusted module can modify ptr, table is out-of-sync)
+    \item Only store metadata in disjoint space for pointers in memory, perform metadata loads/stores only when loaded/stored value from/into memory loc is a ptr
+    \item Wrappers for commonly used libraries
+}
 
 \subsection{Dependent Types}
 
@@ -886,14 +846,13 @@ Xanadu \footcite{xi_imperative_2000}
                 \item Flow-insensitive type checking (insert run-time checks; helps decidability) \note {hybrid means SA for type determination, run-time checks when SA precision is too low}
                 \item Flow-sensitive check optimization
             \end{enumerate}
-        \item More C Support: mutable structures, dependent union tags \note{c idiom: tag indicates union field in use}, Safe TinyOS \footcite{cooprider_efficient_2007} %\footcite{hill_system_2000}, \footcite{gay_nesc_2003}, \footcite{cooprider_efficient_2007}
+        \item More C Support with dependent union tags \note{c idiom: tag indicates union field in use}, Safe TinyOS \footcite{cooprider_efficient_2007} %\footcite{hill_system_2000}, \footcite{gay_nesc_2003}, \footcite{cooprider_efficient_2007}
     \end{itemize}
     \vspace{0.2in}
 \end{frame}
 
 \note[itemize]{
-% they're really *hybrid* approach: try your best, then offer runtime checks
-% TODO maybe include this info (next few items)
+  \item they're really *hybrid* approach: try your best, then offer runtime checks
   \item track info required to place run-time checks (asserts) in program
   \item  flow- path-insensitive, bolvious to aliasing, heap updates, data structures
   \item local type inference
@@ -914,7 +873,6 @@ Xanadu \footcite{xi_imperative_2000}
   \item C-style pointer arithmetic via $\oplus$ operator % TODO why use that special symbol?
   \item $x:\text{ptr int } x\ (x \oplus n)$ $\texttt{// n integer area starting at x}$
   \item $x:\text{ptr int } x\ e\ \ \ \ \ \ \ \ $ $\texttt{// from x to e}$
-% TODO: are the assertions to make it safe (catch bad things), or an assertion something that is known to be true
 }
 
 % go through an example to get a feeling, then after explaining judgments, explain it again stepping through the judgments
@@ -1129,58 +1087,7 @@ Arithmetic
 % also permits a coercion judgement for allowing an array to be used where a smaller one is expected
 % todo how are constraints solved during phase 3?
 
-% todo if time
-%\begin{frame}[fragile]{Revisiting that Deputy Example}
-%\begin{columns}[T]
-%\begin{column}{0.45\textwidth}
-%\begin{lstlisting}[
-%    language=C,numbers=left,mathescape,basicstyle={\scriptsize\ttfamily},
-%    moredelim={**[is][{\btHL[onslide=<3->{fill=blue!50}]}]{@3}{@}},
-%    moredelim={**[is][{\btHL[onslide=<4->{fill=blue!50}]}]{@4}{@}},
-%    moredelim={**[is][{\btHL[onslide=<5->{fill=blue!50}]}]{@5}{@}},
-%    moredelim={**[is][{\btHL[onslide=<6->{fill=red!50}]}]{@6}{@}},
-%    moredelim={**[is][{\btHL[onslide=<7->{fill=red!50}]}]{@7}{@}},
-%    moredelim={**[is][{\btHL[onslide=<8->{fill=red!50}]}]{@8}{@}},
-%    moredelim={**[is][{\btHL[onslide=<9->{fill=red!50}]}]{@9}{@}},
-%]
-%int find_token(int * @3bound(cur, end)@ data,
-%               int * @4sentinel@ end,
-%               int token)
-%{
-%    @6assert(data != NULL);@
-%    @6assert(end != NULL);@
-%    int *p @5bound(cur, end)@ = data;
-%    while (p < end) {
-%        @7assert(p != NULL);@
-%        @7assert(p < end);@
-%        if (*p == token) break;
-%        @8assert(p <= p + 1 <= end);@
-%        p++;
-%    }
-%    @9assert(p != NULL);@
-%    @9assert(p < end);@
-%    return (*p == token);
-%}
-%\end{lstlisting}
-%\end{column}
-%
-%\pause
-%
-%\begin{column}{0.45\textwidth}
-%    \todo{add explanation of use of rules}
-%\end{column}
-%
-%\end{columns}
-%\end{frame}
-
 \begin{frame}{Dependent Types in Imperative Languages}
-%Low-Level Liquid Types (LTLL) \footcite{rondon_low-level_2010}
-%\begin{itemize}
-%    \item Refinement types where predicates are conjunctions over qualifiers
-%    \item Functions qualified over locations they operate on
-%    \item Deal with collections using \emph{location folding} for checking out a copy to do strong updates on
-%    \item Tries to deal with lack of types, mutation, unbounded collections that make type-based mechanisms difficult
-%\end{itemize}
 
 T\'yr \footcite{de_araujo_tyr:_2016}
 \vspace{-0.1in}
@@ -1426,12 +1333,6 @@ void mq_notify(sigevent *n) {
 
 \subsection{Effects and Regions}
 
-%\begin{frame}{The Question}
-%Can we get the \alert{compiler} to do the memory deallocation for us? % will require a restriction of paradigms/cooperation by the programmer
-%\\
-%\vspace{0.2in}
-%Can we statically determine the lifetimes of all values? \note{like automatic variables put on/popped off stack}
-%\end{frame}
 \note[itemize]{
   \item Can we get the \alert{compiler} to do the memory deallocation for us? % will require a restriction of paradigms/cooperation by the programmer
   \item Can we statically determine the lifetimes of all values? \note{like automatic variables put on/popped off stack}
@@ -1441,10 +1342,9 @@ void mq_notify(sigevent *n) {
 \begin{frame}{Effects}
     Effect types describe the \emph{effects} of the computation leading to a value \footcite{pierce_advanced_2005}
     \\
-    \begin{itemize} % you could imagine describing a procedure that...
+    \begin{itemize}
         \item Opening a file
         \item Modifying an object
-        \item \todo{fill me in}
     \end{itemize}
 \end{frame}
 
@@ -1521,12 +1421,6 @@ void mq_notify(sigevent *n) {
 
     \pause
 
-%\begin{gather*}
-%    x \in \text{Variables}
-%    \quad
-%    c \in \text{Constants}
-%\end{gather*}
-
 \vspace{-0.2in}
 \begin{alignat*}{2}
     \text{Exprs}\quad &e &&::= c \altm x \altm \texttt{fn}_{\pi}\ x\ \Rightarrow e_0 \altm e_1\ e_2 \onslide<5->{\altm \texttt{new}_{\pi}\ x\ :=\ e_1\ \texttt{in}\ e_2} \onslide<6->{\altm!x} \onslide<7->{\altm x := e_0}
@@ -1551,8 +1445,6 @@ void mq_notify(sigevent *n) {
 \item we call \pi the creation point
 \item \tau ref \varrho is type of loc created at one of the program points in region \varrho
 }
-
-% BitC \footcite{shapiro_origins_2008} % a retrospective on BitC, what they were looking for (not too interesting)
 
 \begin{frame}{Region-Based Memory Managememt}
     Regions \footcite{tofte_region-based_1997}
@@ -2114,8 +2006,9 @@ Rust OS \footcite{levy_ownership_2015}
 \begin{frame}{Conclusion}
     \begin{itemize}[<+->]
         \item Memory errors $\equiv$ \emph{type errors}
-        \item \emph{Static} memory management % like stack-based approach, important for embedded systems
-        \item Be reasonable and optimistic % dynamic approaches still needed, static has come a long way
+        \item \emph{Static} memory management \note{like stack-based approach, important for embedded systems}
+        \item Split unsafe and safe worlds \todo{fill-in}
+        \item Be reasonable and optimistic \note{dynamic approaches still needed, static has come a long way}
     \end{itemize}
 \end{frame}
 
@@ -2126,26 +2019,63 @@ Rust OS \footcite{levy_ownership_2015}
 \end{frame}
 
 %\subsection{Extra Slides}
-%\begin{frame}{Hardware and Other Support for Spatial Safety}
-%\begin{itemize}
-% spin os
-% \footcite:cha_retos:_2007 
-%    \item \footcite{arora_architectural_2006}
-%    \item \footcite{devietti_hardbound:_2008}
-%    \item \footcite{binary compatible, low overhead}
-%      % - can reduce overhead of CCured's SEQ and WILD pointers, array bounds checking in C#
-%    \item \footcite{cowan_stackguard:_1998}
-%     % - inserts canaries
-%    \item \footcite{hasabnis_light-weight_2012}
-%     % - guard zones with good performance
-%    \footcite{kedia_simple_2017} %        -adding manual memory amangement to high-level langauges C#/java
-% not sure where to include
-%  \footcite:necula_proof-carrying_1997
-%  \footcite:smith_sound_1998 
-%  \footcite:siff_coping_1999 (physical subtyping, used by CCured)
-%  seL4
-%\end{itemize}
-%\end{frame}
+
+\begin{frame}{Referent Objects Approaches}
+J\&K \footcite{jones_backwards_1997}
+    \begin{itemize}
+       \item Maintain table of all known valid storage objects
+       \item Map a ptr to a desciptor of the object into which it points
+       \item Pad objects w/ extra byte
+       \item check ptr arith and use, b/c result cannot refer to diff object from one from which it is originally derived
+       \item object for which the ptr is valid is only determined by checking ptr itself, looking it up in object table
+       \item Incomplete because cannot pad parameters, would change layout
+       \item 11-12x overhead
+    \end{itemize}
+
+CRED \footcite{ruwase_practical_2004}
+    \begin{itemize}
+      \item More generic solution
+      \item 2x overhead
+    \end{itemize}
+\vspace{0.2in}
+\end{frame}
+
+\begin{frame}{BBC}
+\footnotesize
+Baggy Bounds Checking (BBC) \footcite{akritidis_baggy_2009}
+    \begin{itemize}
+    \item Trades memory for performance, fastest object bounds checker
+    \item Compact bounds representation and efficient way to look up object bounds
+    \item Align base addresses to be multiple of padded size
+    \item Replace splay tree with small lookup table
+    \item 0.6x overhead on SPECINT 2000 benchmark
+    \item partition memory into slots with slot\_size bytes (table has entry per slot rather than per byte)
+    \item Pad every object s.t. size is power of two, align base addresses to be multiple of their padded size
+    \item mark if OOB to prevent later dereference
+    \item handle OOB withint slot\_size/2 bytes from original object
+    \end{itemize}
+\vspace{0.2in}
+\end{frame}
+
+%PariCheck \footcite{younan_paricheck_2010} \note{like BBC, faster/lower overhead}
+
+\begin{frame}{Other Spatial Approaches}
+\begin{itemize}
+    \item Purify \footcite{hastings_purify:_1991} (reveal during testing, object based, has temporal safety)
+    \item Valgrind \footcite{nethercote_how_2007} (reveal during testing)
+    %\item Qin SafeMem 2005
+    %\item Venkataramani Memtracker 2007
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Hardware Approaches to Spatial Safety}
+    \begin{itemize}
+       \item Hardbound: Devietti 2008
+       \item Intel MPX %: \verbatim{https://gcc.gnu.org/wiki/Intel%20MPX%20support%20in%20the%20GCC%20compiler}
+       \item Watchdog: Nagarakatte 2012
+       \item (Hybrid): WatchdogLite
+    \end{itemize}
+\end{frame}
 
 \begin{frame}{Alias Types}
   Alias types \footcite{smith_alias_2000}
@@ -2158,31 +2088,31 @@ Rust OS \footcite{levy_ownership_2015}
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Object-Based Temporal Safety}
+\begin{frame}{More Object-Based Temporal Safety}
 \begin{itemize}
 \item Mark locations which were de-allocated in shadow memory space (i.e. track a few bits of state for each byte in memory, indicating if location is currently valid)
 \item Detect access of de-allocated locations
 \item Fails if pointer points again to re-allocated space
-\item Memcheck [30] 
+%\item \footcite{yong_protecting_2001}
+\item Memcheck
     \begin{itemize}
       \item 10x slowdown
     \end{itemize}
-\item Address Sanitizer: Serebryany "address santizier" 2012
+\item Address Sanitizer \footcite{serebryany_addresssanitizer:_2012}
     \begin{itemize}
-        \item tripwire approach
-        \item 73% slowdown
-        \item can also detect small-stride buffer overflows
+        \item Tripwire approach
+        \item 73\% slowdown
+        \item Can detect small-stride buffer overflows
     \end{itemize}
-\item Purify, valgrind
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]{Extended Static Checking}
 Extended Static Checking (ESC) \footcite{detlefs_overview_1995}
     \begin{itemize}
-      \item use automatic theorem prover to detect index bounds in Modula-3
-      \item use info in annotations to assist
-      \item easier than C b/c no ptr arithmetic
+      \item Use automatic theorem prover to detect index bounds in Modula-3
+      \item Use info in annotations to assist
+      \item Easier than C b/c no ptr arithmetic
     \end{itemize}
 Also see: ESC/Java \footcite{flanagan_extended_2002}
 \end{frame}
@@ -2193,15 +2123,15 @@ LCLint \footcite{larochelle_statically_2001}
     \item Leverage LCLint, an annotation-assisted buffer detection tool
     \item Annotations that constrain possible values a reference contains before/after funcall
     \item Function pre/post-condition with: $\footnotesize{\texttt{requires, ensures, unique, returned, modifies, out}}$ clauses
-    \item Assumptions are $\texttt{minSet, maxSet, minRead, maxRead}$ % TODO put notes of what these mean, use in example below!!!
+    \item Assumptions are $\texttt{minSet, maxSet, minRead, maxRead}$
     \item Generates constraints at expression level, resolved w/ checking at statement level
     \item Heuristics to deal with loops nicely enough; neither sound nor complete
 \end{itemize}
-    Also see: ETC/Modula-3 \footcite{detlefs_overview_1995}, ETC/Java \footcite{flanagan_extended_2002}, CSSV \footcite{dor_cssv:_2003}
+    Also see: ESC/Modula-3 \footcite{detlefs_overview_1995}, ESC/Java \footcite{flanagan_extended_2002}
     \vspace{0.2in}
 \end{frame}
 
-\begin{frame}[fragile]{CSSV}
+\begin{frame}{CSSV}
 CSSV \footcite{dor_cssv:_2003}
 \begin{itemize}
     \item Source-to-source translation
@@ -2211,57 +2141,43 @@ CSSV \footcite{dor_cssv:_2003}
     \item Handles overlapping ptrs, etc.
     \item Disadv: \# vars in instr. quadratic in \# in orig.
 \end{itemize}
-    Also see: ETC/Modula-3 \footcite{detlefs_overview_1995}, LCLint \footcite{larochelle_statically_2001}, ETC/Java \footcite{flanagan_extended_2002}
-    \vspace{0.2in}
 \end{frame}
-%- fullcite:bodik_abcd:_2002 <----
-%- fullcite:wagner_first_2000 
-%- disadv: proves correct fraction of array/ptr references (useful for reducing checks)
 
-% longer version of these
-\begin{frame}{Other Linear Types}
-  Typestate \footcite{strom_typestate:_1986}
-    \begin{itemize}
-        \item Avoid nonsensical execution sequences statically (using uninitialized value)
-        \item Typestate is static invariant of each variable name at program point % i.e. need to merge control-paths, regardless of path to get to point
-        \item Define a lattice of states and typestate transition system between them
-        \item Linear types help because of restricting pointer assignment (1-1 mapping between variable names and run-time objects)
-    \end{itemize}
-
+\begin{frame}{Quasi-Linear Types}
+\footnotesize
   Quasi-linear types \footcite{kobayashi_quasi-linear_1999} % relaxtes linear type strong condition
     \begin{itemize}
-        %\item Relax linear type strong condition
+        \item Relax linear type strong condition
         \item Distinguish between consumed values vs those that may be returned
         \item Use $\kappa$ to control how often a variable of type $\tau^{\kappa}$ is used
         \item $\kappa = \delta$: accessed many times \emph{locally}, cannot be returned
-%        \item Inspired $\textsc{paclang}$
-%            \begin{itemize}
-%                \item 0: not used at all
-%                \item 1: value accessed at most once
-%                \item $\omega$: accessed arbitrary number of times
-%                \item $\delta$: accessed many times \emph{locally}, cannot be returned with result
-%            \end{itemize}
-        %\item Quasi-linear value (1) accessed as $\delta$ and then strictly as linear
-        %\item Inspired PacLang
+            \begin{itemize}
+                \item 0: not used at all
+                \item 1: value accessed at most once
+                \item $\omega$: accessed arbitrary number of times
+                \item $\delta$: accessed many times \emph{locally}, cannot be returned with result
+            \end{itemize}
+        \item Quasi-linear value (1) accessed as $\delta$ and then strictly as linear
+        \item Inspired $\textsc{paclang}$
     \end{itemize}
-    \vspace{0.1in}
 \end{frame}
 
 \begin{frame}{Other Linear Types}
 \footnotesize
-  Vault \footcite{deline_enforcing_2001} % TODO review this, TODO where is best place to put this, it combines typestate with regions like Cyclone...
+  Vault \footcite{deline_enforcing_2001}
     \vspace{-0.09in}
     \begin{itemize}
         \item Keys associate static capabilities with run-time resources %, held-key set, type guards
         \item Functions annotated with effect clause (pre- and post-conditions on held-key set contents)
-        %\item Freed regions before leaving scope % todo review
-        %\item Types enforce code must free a region % todo review
-        %\item static enforcement of various protocols
-        %\item Restrict aliasing, tracks fine-grained effects (requires more annotations)
+        \item Freed regions before leaving scope
+        \item Types enforce code must free a region
+        \item static enforcement of various protocols
+        \item Restrict aliasing, tracks fine-grained effects (requires more annotations)
         \item Windows 2000 locking errors, IRP ownership model % corresponds to tracked types
-        % IRP = I/O Request Packets
-        % todo add example?
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Ordered Types}
   Ordered types for memory layout \footcite{petersen_type_2003}
     \vspace{-0.09in}
     \begin{itemize}
@@ -2270,7 +2186,6 @@ CSSV \footcite{dor_cssv:_2003}
         \item ``Orderly lambda calculus'' for size-preserving memory operations
         \item Coercions to manipulate ordered variables in frontier (combine/split to treat as different types)
     \end{itemize}
-  \vspace{0.1in}
 \end{frame}
 
 \begin{frame}{Typestate}
@@ -2283,7 +2198,6 @@ CSSV \footcite{dor_cssv:_2003}
     \end{itemize}
 \end{frame}
 
-% what rust's type system is based on
 \begin{frame}{Some Practical Affine Types}
   Alms \footcite{tov_practical_2011}
     \begin{itemize}
@@ -2292,11 +2206,39 @@ CSSV \footcite{dor_cssv:_2003}
         \item Affine capabilities: separate a read-only reference to array from an affine writeable reference
         \item Define $^{a}\lambda_{ms}$ (based on System $F^{\omega}_{<:}$) and proof of soundness \note{types are maintained during evaluation, assuming no divergence}
         \item Implemented a capability-based interface to Berkeley sockets
-        %TODO have they used it for memory management?
+        \item Basis of Rust's type system
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Some Cyclone Abstract Syntax}
+\begin{frame}{Low-Level Liquid Types}
+Low-Level Liquid Types (LTLL) \footcite{rondon_low-level_2010}
+\begin{itemize}
+    \item Refinement types where predicates are conjunctions over qualifiers
+    \item Functions qualified over locations they operate on
+    \item Deal with collections using \emph{location folding} for checking out a copy to do strong updates on
+    \item Tries to deal with lack of types, mutation, unbounded collections that make type-based mechanisms difficult
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Cyclone}
+Cyclone \footcite{jim_cyclone:_2002}: \note{offshoot of TAL/popcorn}
+\begin{itemize}
+    \item Annotations for non-array vs array pointers (can specify size) % (never-null, fat, unitialized warning via control-flow analysis) % TODO look up again, split this
+    \item Tagged unions and automatic tag injection
+    \item e.g. instead of var-args, know exactly what's stored in thing callee passed $\texttt{printf}$
+    %\item Can specify number of elements pointer points to \note{deputy is more general}
+    %\item Arrays and strings converted automatically to fat
+    %\item Statically validate and remove non-array fat pointers
+    \item Need user annotations more than other approaches
+    \item 40 percent runtime overhead
+    \item Uses regions + automatic memory management for temporal safety (free is a no-op) (see nice example)
+    \item never null don't need checks, use @; push back null checks from uses to their sources
+    \item Restrict arithmetic on regular pointers
+    \item parametric polymorphism, subtyping, static analysis to check for safety, adding run-time checks
+\end{itemize}
+\end{frame}
+
+\begin{frame}{All Cyclone's Abstract Syntax}
 \scriptsize{
 \begin{alignat*}{2}
 \text{kinds}\quad &\kappa &&::= T \altm R
@@ -2326,6 +2268,31 @@ CSSV \footcite{dor_cssv:_2003}
 ~ & ~ && \qquad \rho:\{\tau\ x_\rho = e;\ s\} \altm \textbf{region}\langle\rho\rangle\ x_{\rho}\ s \altm \rho:\{\textbf{open}[\alpha,x_{\rho}] = e;\ s\} \altm s\ \textbf{pop}[\rho]
 \end{alignat*}
     }
+\end{frame}
+
+\begin{frame}{Fail-Safe C}
+\begin{itemize}
+\item Safe implementation of ANSI-C, handles casts very well
+\item Extend fat pointers to also contain
+    \begin{itemize}
+        \item 'Cast' flag embedded in two-word representation: enables optimization by not needing to do a long memory access via reading header information elsewhere
+        \item 'Virtual Offsets' instead of real memory address offsets
+    \end{itemize}
+\item Fat Integer: integer large enough to hold any pointer value
+\item Virtual offset: corresponds to program-visible size
+\item Virtual size: real size of equivalent data type in native C impl.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Hardware and Other Support for Spatial Safety}
+\begin{itemize}
+    \item Hardbound \footcite{devietti_hardbound:_2008}
+    \item Stackguard \footcite{cowan_stackguard:_1998} (inserts canaries)
+    \item Light-weight Bounds Checking \footcite{hasabnis_light-weight_2012} (guard zones with good performance)
+    \item Manual MM to high-level languages \footcite{kedia_simple_2017}
+    \item PCC \footcite{necula_proof-carrying_1997}
+    \item BitC \footcite{shapiro_origins_2008} (a retrospective on BitC, what they were looking for (not too interesting))
+\end{itemize}
 \end{frame}
 
 \end{document}
