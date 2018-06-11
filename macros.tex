@@ -155,6 +155,9 @@
 % listings setup
 %\lstset{basicstyle=\tiny\ttfamily,columns=fixed}
 
+\usepackage{fnpct}
+\AdaptNoteOpt\footcite\multfootcite
+
 \xapptobibmacro{cite}{\setunit{\nametitledelim}\printfield{year}}{}{}
 
 % highlighting lines in listings
@@ -194,6 +197,8 @@
 \newcommand{\colorIt}[3]{
    \tikz[baseline]{ \node[fill=#1!20,anchor=base,rounded corners=2pt] (#2) {\ensuremath{#3}};}
 }
+
+\usepackage{listings-rust}
 
 %%% Local Variables:
 %%% mode: latex
